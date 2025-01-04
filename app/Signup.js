@@ -9,7 +9,7 @@ const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/;
 const phoneNumberRegex = /^[0-9]{10}$/; // 10 digits, can adjust based on your country
 
 // Function to validate password strength
-const isPasswordStrong = (password:string) => {
+const isPasswordStrong = (password) => {
   const strongPasswordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
   return strongPasswordRegex.test(password);
 };
