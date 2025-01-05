@@ -1,140 +1,135 @@
-import React, { useState } from 'react';
-import { StyleSheet, View, Text, Image, TouchableOpacity } from 'react-native';
-import * as ImagePicker from 'expo-image-picker';
-import * as FileSystem from 'expo-file-system';
+import React, { useState, useEffect, useRef } from 'react';
+import { StyleSheet, View, Text } from 'react-native';
+import { WebView } from 'react-native-webview';
 import axios from 'axios';
+import * as Speech from 'expo-speech';
 
-const DetectObject = () => {
-    const [imageUri, setImageUri] = useState(null);
-    const [labels, setLabels] = useState([]);
+const CameraWebViewWithAutoCapture = () => {
+  const [labels, setLabels] = useState([]);
+  const webviewRef = useRef(null);
 
-    const captureImage = async () => {
-        try {
-            const { status } = await ImagePicker.requestCameraPermissionsAsync();
-            if (status !== 'granted') {
-                alert('Camera permissions are required to use this feature.');
-                return;
-            }
+  // Function to capture image from WebView (automatically)
+  const captureImage = async () => {
+    if (webviewRef.current) {
+      webviewRef.current.injectJavaScript(`
+        (function() {
+          const video = document.querySelector('video');
+          const canvas = document.createElement('canvas');
+          canvas.width = video.videoWidth;
+          canvas.height = video.videoHeight;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(video, 0, 0);
+          const imageData = canvas.toDataURL('image/jpeg').replace('data:image/jpeg;base64,', '');
+          window.ReactNativeWebView.postMessage(imageData);
+        })();
+      `);
+    }
+  };
 
-            let result = await ImagePicker.launchCameraAsync({
-                allowsEditing: true,
-                aspect: [4, 3],
-                quality: 1,
-            });
+  // Function to analyze the captured image using Google Vision API
+  const analyzeImage = async (base64ImageData) => {
+    try {
+      const apiKey = 'AIzaSyCaREgPQjYUsrzG9HR37FK63RhS6hy5SSw'; // Replace with your API key
+      const apiURL = `https://vision.googleapis.com/v1/images:annotate?key=${apiKey}`;
 
-            if (!result.canceled) {
-                setImageUri(result.assets[0].uri);
-            }
-            console.log(result);
-        } catch (error) {
-            console.error('Error capturing image:', error);
-        }
+      // Prepare the request payload for the Google Vision API
+      const requestData = {
+        requests: [
+          {
+            image: { content: base64ImageData },
+            features: [{ type: 'LABEL_DETECTION', maxResults: 10 }],
+          },
+        ],
+      };
+
+      // Make the API request
+      const apiResponse = await axios.post(apiURL, requestData);
+
+      // Extract and sort labels
+      const allLabels = apiResponse.data.responses[0]?.labelAnnotations || [];
+      const sortedLabels = allLabels.sort((a, b) => b.score - a.score).slice(0, 2);
+
+      setLabels(sortedLabels);
+
+      // Prepare the spoken response
+      const labelNames = sortedLabels.map((label) => label.description);
+      const sentence = `Detected objects are ${labelNames.join(' or ')}.`;
+
+      // Speak out the detected labels
+      Speech.speak(sentence);
+    } catch (error) {
+      console.error('Error analyzing image:', error);
+    }
+  };
+
+  // Handle messages sent from the WebView (captured image)
+  const handleMessage = (event) => {
+    const base64ImageData = event.nativeEvent.data; // This is already a Base64 string
+    analyzeImage(base64ImageData); // Pass the Base64 string directly to the analyzeImage function
+  };
+
+  // Function to start automatic image capture and analysis every 5 seconds
+  useEffect(() => {
+    const intervalId = setInterval(() => {
+      captureImage(); // Capture the image
+    }, 5000); // Capture every 5 seconds
+
+    return () => {
+      clearInterval(intervalId); // Cleanup interval on component unmount
     };
+  }, []);
 
-    const analyzeImage = async () => {
-        try {
-            if (!imageUri) {
-                alert('Please capture an image first');
-                return;
-            }
-            const apiKey = "AIzaSyCaREgPQjYUsrzG9HR37FK63RhS6hy5SSw";
-            const apiURL = `https://vision.googleapis.com/v1/images:annotate?key=${apiKey}`;
-            const base64ImageData = await FileSystem.readAsStringAsync(imageUri, {
-                encoding: FileSystem.EncodingType.Base64,
-            });
+  return (
+    <View style={{ flex: 1 }}>
+      <Text style={styles.heading}>Camera WebView with Auto Capture</Text>
+      <WebView
+        ref={webviewRef}
+        source={{ uri: 'https://ShafqatWarraich.github.io/webcamera/web_cam.html' }} // Replace with your actual URL
+        javaScriptEnabled={true}
+        domStorageEnabled={true}
+        mediaPlaybackRequiresUserAction={false}
+        allowsInlineMediaPlayback={true}
+        startInLoadingState={true}
+        onMessage={handleMessage} // Handle captured image data here
+        onError={(error) => console.log(error)}
+      />
 
-            const requestData = {
-                requests: [
-                    {
-                        image: {
-                            content: base64ImageData,
-                        },
-                        features: [{ type: 'LABEL_DETECTION', maxResults: 10 }],
-                    },
-                ],
-            };
-
-            const apiResponse = await axios.post(apiURL, requestData);
-
-            // Extract and sort the labels by confidence score
-            const allLabels = apiResponse.data.responses[0].labelAnnotations;
-            const sortedLabels = allLabels
-                .sort((a, b) => b.score - a.score) // Sort in descending order of confidence
-                .slice(0, 2); // Take the top 2 labels
-
-            setLabels(sortedLabels);
-        } catch (error) {
-            console.error('Error analyzing image:', error);
-            alert('Error analyzing image, please try again');
-        }
-    };
-
-    return (
-        <View style={styles.container}>
-            <Text style={styles.title}>Object Detection</Text>
-            {imageUri && (
-                <Image
-                    source={{ uri: imageUri }}
-                    style={{ width: 300, height: 300 }}
-                />
-            )}
-            <TouchableOpacity
-                onPress={captureImage}
-                style={styles.button}>
-                <Text style={styles.text}>Capture an Image</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-                onPress={analyzeImage}
-                style={styles.button}>
-                <Text style={styles.text}>Analyze Image</Text>
-            </TouchableOpacity>
-            {labels.length > 0 && (
-                <View>
-                    <Text style={styles.label}>Top Labels</Text>
-                    {labels.map((label, index) => (
-                        <Text
-                            key={index}
-                            style={styles.outputText}>
-                            {label.description} ({(label.score * 100).toFixed(2)}%)
-                        </Text>
-                    ))}
-                </View>
-            )}
+      {/* Display the detected labels */}
+      {labels.length > 0 && (
+        <View style={styles.labelsContainer}>
+          <Text style={styles.label}>Detected Labels:</Text>
+          {labels.map((label, index) => (
+            <Text key={index} style={styles.labelText}>
+              {label.description}
+            </Text>
+          ))}
         </View>
-    );
+      )}
+    </View>
+  );
 };
 
-export default DetectObject;
-
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        alignItems: 'center',
-        justifyContent: 'center',
-    },
-    title: {
-        fontSize: 30,
-        fontWeight: 'bold',
-        marginBottom: 50,
-        marginTop: 100,
-    },
-    button: {
-        backgroundColor: '#969696',
-        padding: 10,
-        marginBottom: 10,
-        marginTop: 20,
-    },
-    text: {
-        fontSize: 20,
-        fontWeight: 'bold',
-    },
-    label: {
-        fontSize: 20,
-        fontWeight: 'bold',
-        marginTop: 20,
-    },
-    outputText: {
-        fontSize: 20,
-        marginBottom: 10,
-    },
+  heading: {
+    fontSize: 24,
+    textAlign: 'center',
+    marginVertical: 20,
+  },
+  labelsContainer: {
+    marginTop: 20,
+    padding: 10,
+    backgroundColor: '#f0f0f0',
+    borderRadius: 10,
+  },
+  label: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginBottom: 10,
+  },
+  labelText: {
+    fontSize: 18,
+    marginBottom: 5,
+  },
 });
+
+export default CameraWebViewWithAutoCapture;
