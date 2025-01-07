@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { StyleSheet, View, Text, TextInput, TouchableOpacity, FlatList, ScrollView, Alert } from "react-native";
+import { StyleSheet, View, Text, TextInput, TouchableOpacity, ScrollView, Alert } from "react-native";
 import MapView, { Marker, Polyline } from "react-native-maps";
 import * as Location from "expo-location";
 import * as LocationGeocoding from "expo-location";
@@ -12,7 +12,6 @@ const GoogleMap = () => {
   const [destination, setDestination] = useState("");
   const [routeCoords, setRouteCoords] = useState([]);
   const [currentAddress, setCurrentAddress] = useState("Fetching location...");
-  const [suggestions, setSuggestions] = useState([]);
   const [selectedDestination, setSelectedDestination] = useState(null);
   const [directions, setDirections] = useState([]);
   const [footerVisible, setFooterVisible] = useState(false);
@@ -54,36 +53,14 @@ const GoogleMap = () => {
     }
   };
 
-  const getSuggestions = async (query) => {
-    if (!query) {
-      setSuggestions([]);
-      return;
-    }
-
-    const url = `https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${query}&location=${currentLocation.latitude},${currentLocation.longitude}&radius=5000&key=${GOOGLE_API_KEY}`;
-    try {
-      const response = await fetch(url);
-      const data = await response.json();
-      setSuggestions(data.predictions || []);
-    } catch (error) {
-      console.error("Error fetching suggestions", error);
-    }
-  };
-
-  const handleSuggestionSelect = (suggestion) => {
-    setDestination(suggestion.description);
-    setSelectedDestination(suggestion.description);
-    setSuggestions([]);
-  };
-
   const getDirections = async () => {
-    if (!selectedDestination) {
-      Alert.alert("Error", "Please select a destination.");
+    if (!destination) {
+      Alert.alert("Error", "Please enter a destination.");
       return;
     }
 
     try {
-      const geoResult = await LocationGeocoding.geocodeAsync(selectedDestination);
+      const geoResult = await LocationGeocoding.geocodeAsync(destination);
       if (!geoResult.length) {
         Alert.alert("Error", "Destination not found.");
         return;
@@ -110,7 +87,6 @@ const GoogleMap = () => {
         setDirections(steps);
         setFooterVisible(true);
 
-        // Extract summary details
         setTravelSummary({
           duration: data.routes[0].legs[0].duration.text,
           distance: data.routes[0].legs[0].distance.text,
@@ -163,15 +139,7 @@ const GoogleMap = () => {
   };
 
   const removeHtmlTags = (html) => {
-    return html.replace(/<[^>]*>/g, ""); // Regex to remove HTML tags
-  };
-
-  const handleCancelNavigation = () => {
-    setRouteCoords([]);
-    setDirections([]);
-    setFooterVisible(false);
-    setDestination("");
-    setSelectedDestination(null);
+    return html.replace(/<[^>]*>/g, "");
   };
 
   return (
@@ -187,54 +155,20 @@ const GoogleMap = () => {
           style={styles.input}
           placeholder="Where to?"
           value={destination}
-          onChangeText={(text) => {
-            setDestination(text);
-            getSuggestions(text);
-          }}
+          onChangeText={(text) => setDestination(text)} // Removed getSuggestions function call
         />
-        {suggestions.length > 0 && (
-          <FlatList
-            data={suggestions}
-            keyExtractor={(item) => item.place_id}
-            renderItem={({ item }) => (
-              <TouchableOpacity
-                onPress={() => handleSuggestionSelect(item)}
-                style={styles.suggestionItem}
-              >
-                <Text>{item.description}</Text>
-              </TouchableOpacity>
-            )}
-          />
-        )}
         <TouchableOpacity style={styles.button} onPress={getDirections}>
           <Text style={styles.buttonText}> Directions</Text>
         </TouchableOpacity>
       </View>
-
       <MapView style={styles.map} region={region} showsUserLocation={true}>
         {routeCoords.length > 1 && (
           <>
-            <Marker
-              coordinate={routeCoords[routeCoords.length - 1]}
-              title="Destination"
-            />
+            <Marker coordinate={routeCoords[routeCoords.length - 1]} title="Destination" />
             <Polyline coordinates={routeCoords} strokeWidth={4} strokeColor="blue" />
           </>
         )}
       </MapView>
-
-      {footerVisible && (
-        <View style={styles.footer}>
-          <ScrollView horizontal={true} style={styles.footerContent}>
-            <Text style={styles.footerText}>Duration: {travelSummary.duration}</Text>
-            <Text style={styles.footerText}>Distance: {travelSummary.distance}</Text>
-            <Text style={styles.footerText}>Arrival: {travelSummary.arrivalTime}</Text>
-          </ScrollView>
-          <TouchableOpacity style={styles.cancelButton} onPress={handleCancelNavigation}>
-            <Text style={styles.cancelButtonText}>X</Text>
-          </TouchableOpacity>
-        </View>
-      )}
     </View>
   );
 };
@@ -243,23 +177,9 @@ const styles = StyleSheet.create({
   container: { flex: 1 },
   inputContainer: { padding: 10 },
   input: { borderWidth: 1, padding: 10, marginVertical: 5, borderRadius: 5 },
-  button: { backgroundColor: "#121721", padding: 10, borderRadius:15, alignItems: "center" },
+  button: { backgroundColor: "#121721", padding: 10, borderRadius: 15, alignItems: "center" },
   buttonText: { color: "white" },
   map: { flex: 1 },
-  footer: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    backgroundColor: "#ffffff",
-    padding: 10,
-    borderTopWidth: 1,
-    borderTopColor: "#ccc",
-  },
-  footerContent: { flex: 1 },
-  footerText: { marginHorizontal: 10, fontSize: 16 },
-  cancelButton: { padding: 10 },
-  cancelButtonText: { fontSize: 20, fontWeight: "bold", color: "red" },
-  suggestionItem: { padding: 10, borderBottomWidth: 1, borderColor: "#ccc" },
 });
 
 export default GoogleMap;
