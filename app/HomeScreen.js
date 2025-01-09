@@ -44,7 +44,7 @@ const HomeScreen = () => {
             router.push('/ObjectDetection');
           } else if (resultText.toLowerCase().includes('open map')) {
             router.push('/MapScreen');
-          } else {
+          } else if (resultText.toLowerCase().includes('AI assistant')) {
             router.push('/AI');
           }
         }, 3000); // Record for 5 seconds
@@ -75,7 +75,7 @@ const HomeScreen = () => {
        
         setTimeout(() => {
           startRecording();
-        }, 100); // Add a delay of 1 second before starting the recording
+        }, 200); // Add a delay of 1 second before starting the recording
       },
       
       pitch: 1.0,
@@ -105,7 +105,7 @@ const HomeScreen = () => {
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.featureCard}
-          onPress={() => navigateTo('MapScreen')}
+          onPress={() => navigateTo('map_object_detection')}
         >
           <Image
             source={require('../assets/images/Map.jpg')}

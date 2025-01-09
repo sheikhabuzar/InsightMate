@@ -3,7 +3,7 @@ import { StyleSheet, View, Text } from 'react-native';
 import { WebView } from 'react-native-webview';
 import axios from 'axios';
 import * as Speech from 'expo-speech';
-
+// AIzaSyCaREgPQjYUsrzG9HR37FK63RhS6hy5SSw
 const CameraWebViewWithAutoCapture = () => {
   const [labels, setLabels] = useState([]);
   const webviewRef = useRef(null);
@@ -58,7 +58,7 @@ const CameraWebViewWithAutoCapture = () => {
       // Speak out the detected labels
       Speech.speak(sentence);
     } catch (error) {
-      console.error('Error analyzing image:', error);
+      
     }
   };
 
@@ -80,8 +80,8 @@ const CameraWebViewWithAutoCapture = () => {
   }, []);
 
   return (
-    <View style={{ flex: 1 }}>
-      <Text style={styles.heading}>Camera WebView with Auto Capture</Text>
+    <View style={{ flex: 1 }}> 
+      <Text style={styles.heading}>Object Detection</Text>
       <WebView
         ref={webviewRef}
         source={{ uri: 'https://ShafqatWarraich.github.io/webcamera/web_cam.html' }} // Replace with your actual URL
