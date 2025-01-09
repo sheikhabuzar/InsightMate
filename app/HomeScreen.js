@@ -4,93 +4,23 @@ import { useRouter } from 'expo-router';
 import * as Speech from 'expo-speech';
 import { Audio } from 'expo-av';
 import { Buffer } from 'buffer';
-
+import { createDrawerNavigator } from '@react-navigation/drawer';
+import { NavigationContainer } from '@react-navigation/native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { Ionicons } from '@expo/vector-icons';
+import ProfileScreen from './Profile';
+import Alerts from './Alerts';
+import MyFamily from './MyFamily';
+import SavedLocations from './SavedLocations';
+import Logout from './Logout'
+import EmergencyContacts from './EmergencyContacts';
 global.Buffer = global.Buffer || Buffer;
 
-const HomeScreen = () => {
-  const router = useRouter();
+const Drawer = createDrawerNavigator();
 
-  useEffect(() => {
-    const welcomeMessage = "Welcome to Insight Mate, How May I Help You?";
-
-    const startRecording = async () => {
-      try {
-        const { granted } = await Audio.requestPermissionsAsync();
-        if (!granted) {
-          console.log('Permission to access microphone is required!');
-          return;
-        }
-
-        const recording = new Audio.Recording();
-        await recording.prepareToRecordAsync(
-          Audio.RECORDING_OPTIONS_PRESET_HIGH_QUALITY
-        );
-        await recording.startAsync();
-        console.log('Recording started');
-
-        setTimeout(async () => {
-          await recording.stopAndUnloadAsync();
-          console.log('Recording stopped');
-          const uri = recording.getURI();
-          const file = await fetch(uri);
-          const buffer = await file.arrayBuffer();
-
-          // Send the audio buffer to Deepgram API
-          const resultText = await sendToDeepgram(buffer);
-          console.log('Deepgram Response:', resultText);
-
-          // Navigate based on the response
-          if (resultText.toLowerCase().includes('detect object')) {
-            router.push('/ObjectDetection');
-          } else if (resultText.toLowerCase().includes('open map')) {
-            router.push('/MapScreen');
-          } else if (resultText.toLowerCase().includes('AI assistant')) {
-            router.push('/AI');
-          }
-        }, 3000); // Record for 5 seconds
-      } catch (error) {
-        console.error('Error during recording:', error);
-      }
-    };
-
-    const sendToDeepgram = async (audioBuffer) => {
-      const apiKey = '7626411a142c24bc75218732a32fd089a8810ba6'; // Replace with your Deepgram API key
-      const response = await fetch('https://api.deepgram.com/v1/listen', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'audio/wav',
-          'Authorization': `Token ${apiKey}`,
-        },
-        body: audioBuffer,
-      });
-
-      const data = await response.json();
-      return data.results?.channels[0]?.alternatives[0]?.transcript || '';
-    };
-
-    // Speak the welcome message and start recording after it's done
-    Speech.speak(welcomeMessage, {
-      onDone: () => {
-        console.log('Welcome message complete. Starting recording after delay...');
-       
-        setTimeout(() => {
-          startRecording();
-        }, 200); // Add a delay of 1 second before starting the recording
-      },
-      
-      pitch: 1.0,
-      rate: 1.0
-
-    });
-  }, []);
-
-  const navigateTo = (screen) => {
-    router.push(`/${screen}`);
-  };
-
+const HomeScreenContent = ({ navigateTo }) => {
   return (
     <View style={styles.container}>
-      
       <Text style={styles.appName}>Insight Mate</Text>
       <View style={styles.featuresContainer}>
         <TouchableOpacity 
@@ -134,33 +64,215 @@ const HomeScreen = () => {
   );
 };
 
+const HomeScreen = () => {
+  const router = useRouter();
+
+  useEffect(() => {
+    const welcomeMessage = "Welcome to Insight Mate, How May I Help You?";
+
+    const startRecording = async () => {
+      try {
+        const { granted } = await Audio.requestPermissionsAsync();
+        if (!granted) {
+          console.log('Permission to access microphone is required!');
+          return;
+        }
+
+        const recording = new Audio.Recording();
+        await recording.prepareToRecordAsync(
+          Audio.RECORDING_OPTIONS_PRESET_HIGH_QUALITY
+        );
+        await recording.startAsync();
+        console.log('Recording started');
+
+        setTimeout(async () => {
+          await recording.stopAndUnloadAsync();
+          console.log('Recording stopped');
+          const uri = recording.getURI();
+          const file = await fetch(uri);
+          const buffer = await file.arrayBuffer();
+
+          // Send the audio buffer to Deepgram API
+          const resultText = await sendToDeepgram(buffer);
+          console.log('Deepgram Response:', resultText);
+
+          // Navigate based on the response
+          if (resultText.toLowerCase().includes('detect object')) {
+            router.push('/ObjectDetection');
+          } else if (resultText.toLowerCase().includes('open map')) {
+            router.push('/MapScreen');
+          } else if (resultText.toLowerCase().includes('AI assistant')) {
+            router.push('/AI');
+          }
+        }, 3000); // Record for 3 seconds
+      } catch (error) {
+        console.error('Error during recording:', error);
+      }
+    };
+
+    const sendToDeepgram = async (audioBuffer) => {
+      const apiKey = '7626411a142c24bc75218732a32fd089a8810ba6'; // Replace with your Deepgram API key
+      const response = await fetch('https://api.deepgram.com/v1/listen', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'audio/wav',
+          'Authorization': `Token ${apiKey}`,
+        },
+        body: audioBuffer,
+      });
+
+      const data = await response.json();
+      return data.results?.channels[0]?.alternatives[0]?.transcript || '';
+    };
+
+    // Speak the welcome message and start recording after it's done
+    Speech.speak(welcomeMessage, {
+      onDone: () => {
+        console.log('Welcome message complete. Starting recording after delay...');
+       
+        setTimeout(() => {
+          startRecording();
+        }, 200); // Add a delay before starting the recording
+      },
+      
+      pitch: 1.0,
+      rate: 1.0
+    });
+  }, []);
+  return (
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <Drawer.Navigator
+        screenOptions={{
+          headerStyle: { backgroundColor: "#f2f2f2" },
+          headerTintColor: "#212121",
+          drawerActiveTintColor: "#007AFF",
+     drawerInactiveTintColor: "#333",
+          drawerStyle: { backgroundColor: "#f8f8f8", width: 250 },
+        }}
+      >
+        {/* Home Screen */}
+        <Drawer.Screen
+          name="Home"
+          options={{
+            title: "Home",
+            drawerIcon: ({ color, size }) => (
+              <Ionicons name="home-outline" size={size} color={color} />
+            ),
+          }}
+        >
+          {(props) => <HomeScreenContent {...props} />}
+        </Drawer.Screen>
+
+        {/* Profile Screen */}
+        <Drawer.Screen
+          name="Profile"
+          component={ProfileScreen}
+          options={{
+            title: "Profile",
+            drawerIcon: ({ color, size }) => (
+              <Ionicons name="person-outline" size={size} color={color} />
+            ),
+          }}
+        />
+
+        {/* My Family */}
+        <Drawer.Screen
+          name="MyFamily"
+          component={MyFamily}
+          options={{
+            title: "My Family",
+            drawerIcon: () => (
+              <Image
+                source={require("../assets/images/family.jpg")}
+                style={{ width: 24, height: 24 }}
+              />
+            ),
+          }}
+        />
+
+        {/* Saved Locations */}
+        <Drawer.Screen
+          name="SavedLocations"
+          component={SavedLocations}
+          options={{
+            title: "Saved Locations",
+            drawerIcon: () => (
+              <Image
+                source={require("../assets/images/Visitedlocation.png")}
+                style={{ width: 24, height: 24 }}
+              />
+            ),
+          }}
+        />
+        {/* Saved Locations */}
+        <Drawer.Screen
+          name="EmergencyContacts"
+          component={EmergencyContacts}
+          options={{
+            title: "Emergency Contacts",
+            drawerIcon: () => (
+              <Image
+                source={require("../assets/images/emer.jpg")}
+                style={{ width: 24, height: 24 }}
+              />
+            ),
+          }}
+        />
+
+        {/* Alerts */}
+        <Drawer.Screen
+          name="Alerts"
+          component={Alerts}
+          options={{
+            title: "Alerts",
+            drawerIcon: () => (
+              <Image
+                source={require("../assets/images/Alerts.png")}
+                style={{ width: 24, height: 24 }}
+              />
+            ),
+          }}
+        />
+
+        {/* Logout */}
+        <Drawer.Screen
+          name="Logout"
+          component={Logout}
+          options={{
+            title: "Logout",
+            drawerIcon: () => (
+              <Image
+                source={require("../assets/images/logout.png")}
+                style={{ width: 24, height: 24 }}
+              />
+            ),
+          }}
+        />
+      </Drawer.Navigator>
+    </GestureHandlerRootView>
+  );
+};
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'flex-start', // Align content from the top
+    justifyContent: 'flex-start',
     alignItems: 'center',
-    backgroundColor: '#f2f2f2', // Background color of the screen
-    paddingTop: 30, // Adding top padding for the app name
-  },
-  welcomeMessage: {
-    fontSize: 18,
-    color: '#333',
-    marginBottom: 20, // Space between welcome message and app name
-    textAlign: 'center',
+    backgroundColor: '#f2f2f2',
+    paddingTop: 30,
   },
   appName: {
     fontSize: 32,
     fontWeight: 'bold',
     color: '#333',
-    marginBottom: 40, // Space between app name and feature buttons
-    textAlign: 'center',
+    marginBottom: 40,
   },
   featuresContainer: {
-    flexDirection: 'column', // Change from row to column for vertical stacking
-    justifyContent: 'center', // Center the items vertically
-    alignItems: 'center', // Center the items horizontally
-    width: '100%', // Use full width for the container
-    marginBottom: 30, // Space between features and mic icon
+    flexDirection: 'column', // Change to column for vertical stacking
+    justifyContent: 'center',
+    alignItems: 'center',
+    width: '100%',
+    marginBottom: 30,
   },
   featureCard: {
     alignItems: 'center',
@@ -168,19 +280,18 @@ const styles = StyleSheet.create({
     paddingVertical: 20,
     paddingHorizontal: 20,
     borderRadius: 10,
-    width: '80%', // Adjust width to fit the cards vertically
-    marginBottom: 20, // Space between cards
-    elevation: 3, // Optional shadow for the cards
-    marginTop: 30,
-    backgroundColor: 'transparent', // Remove blue background
+    width: '80%',
+    marginBottom: 20,
+    elevation: 3,
+    backgroundColor: 'transparent',
   },
   featureIcon: {
-    width: 40,
-    height: 40,
-    marginBottom: 10, // Space between icon and text
+    width: 60,
+    height: 60,
+    marginBottom: 10,
   },
   featureText: {
-    color: '#333', // Set text color to dark for better readability
+    color: '#333',
     fontSize: 16,
     fontWeight: 'bold',
   },
@@ -188,12 +299,12 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: 20,
     left: 20,
-    elevation: 10, // Adds elevation to make the mic hover
+    elevation: 10,
   },
   micIcon: {
     width: 50,
     height: 50,
-    borderRadius: 25, // Circular icon
+    borderRadius: 25,
   },
 });
 
