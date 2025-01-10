@@ -61,43 +61,47 @@ const ObjectDetectionScreen = ({ navigation }) => {
       // Handle FACE_DETECTION results
       const faceAnnotations = apiResponse.data.responses[0]?.faceAnnotations || [];
       if (faceAnnotations.length > 0) {
-        // Face detected, speak out that a face was detected
         Speech.speak('Person detected');
         setLabels([{ description: 'Person face detected' }]); // Update UI with the face label
-      }
-else{
-      // Handle LABEL_DETECTION results
-      const allLabels = apiResponse.data.responses[0]?.labelAnnotations || [];
-      const sortedLabels = allLabels.sort((a, b) => b.score - a.score).slice(0, 2);
-      setLabels(sortedLabels);
-
-      // Check if "person" is in the detected labels
-      const labelNames = sortedLabels.map((label) => label.description);
-      const sentenceParts = [];
-
-      // Add remaining labels
-      sentenceParts.push(`Detected objects are ${labelNames.join(' or ')}.`);
-
-      
-        Speech.speak(sentenceParts.join('. '));
-}
-
-      // Track repeated labels
-      if (
-        previousLabels.current.length > 0 &&
-        JSON.stringify(previousLabels.current) === JSON.stringify(sortedLabels)
-      ) {
-        sameLabelCount.current += 1;
       } else {
-        sameLabelCount.current = 0;
-      }
+        // Handle LABEL_DETECTION results
+        const allLabels = apiResponse.data.responses[0]?.labelAnnotations || [];
+        const sortedLabels = allLabels
+          .sort((a, b) => b.score - a.score)
+          .slice(0, 2);
 
-      previousLabels.current = sortedLabels;
+        if (sortedLabels.length > 0) {
+          setLabels(sortedLabels);
 
-      if (sameLabelCount.current >= 3) {
-        detecting.current = false;
-        sameLabelCount.current = 0;
-        router.push('/AskContinueScreen'); // Navigate to the new screen
+          // Check if "person" is in the detected labels
+          const labelNames = sortedLabels.map((label) => label.description);
+          const sentenceParts = [];
+
+          // Add remaining labels
+          sentenceParts.push(`Detected objects are ${labelNames.join(' or ')}.`);
+          Speech.speak(sentenceParts.join('. '));
+
+          // Track repeated labels
+          if (
+            previousLabels.current.length > 0 &&
+            JSON.stringify(previousLabels.current) === JSON.stringify(sortedLabels)
+          ) {
+            sameLabelCount.current += 1;
+          } else {
+            sameLabelCount.current = 0;
+          }
+
+          previousLabels.current = sortedLabels;
+
+          if (sameLabelCount.current >= 3) {
+            detecting.current = false;
+            sameLabelCount.current = 0;
+            router.push('/AskContinueScreen'); // Navigate to the new screen
+          }
+        } else {
+          setLabels([]);
+          console.log('No labels detected.');
+        }
       }
     } catch (error) {
       console.error('Error analyzing image:', error.message);
