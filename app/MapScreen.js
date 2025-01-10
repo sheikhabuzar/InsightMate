@@ -59,6 +59,29 @@ const GoogleMap = () => {
   //////////////////////////////////////////////////
   ///////////////////////////////////////////////////
 
+
+   const handleBackButton =  async() =>  {
+    
+     ///////////////////////////////////////////////////////
+     if (recordingRef.current) {
+           try {
+              if (recordingRef.current.getStatusAsync) {
+            const status = await recordingRef.current.getStatusAsync();
+           if (status.isRecording) {
+             await recordingRef.current.stopAndUnloadAsync();
+           }
+            }
+              recordingRef.current = null; // Clear the reference after stopping
+         } catch (error) {
+            console.error("Error while stopping/unloading recording:", error);
+                }
+           }
+/////////////////////////////////////
+    Speech.stop(); // Stop any ongoing speech
+    router.replace('/HomeScreen');
+    return; // Navigate to HomeScreen
+  };
+
 const startPromptCycle = () => {
   
   const askQuestion = async () => {
@@ -138,6 +161,11 @@ const startPromptCycle = () => {
             homechk = homechk.replace(/\./g, "");///////////////////////////////////
             homechk = homechk.replace(/\bListening\b/gi, "").trim();
             homechk = homechk.replace(/\blistening\b/gi, "").trim();
+             homechk = homechk.replace(/\?/g, "");
+            homechk = homechk.replace(/\-/g, "");
+            homechk = homechk.replace(/\:/g, "");
+            homechk = homechk.replace(/\'/g, "");
+            homechk = homechk.replace(/\"/g, "");
 
             console.log('Update Location : '+homechk);
         
@@ -296,6 +324,11 @@ const startPromptCycle = () => {
             homechk = homechk.replace(/\./g, "");///////////////////////////////////
             homechk = homechk.replace(/\bListening\b/gi, "").trim();
             homechk = homechk.replace(/\blistening\b/gi, "").trim();
+             homechk = homechk.replace(/\?/g, "");
+            homechk = homechk.replace(/\-/g, "");
+            homechk = homechk.replace(/\:/g, "");
+            homechk = homechk.replace(/\'/g, "");
+            homechk = homechk.replace(/\"/g, "");
         
         if (homechk.trim().toLowerCase().includes("home screen") || homechk.trim().toLowerCase().includes("home  screen")
         || homechk.trim().toLowerCase().includes("home") || homechk.trim().toLowerCase().includes("Home screen")) {
@@ -405,7 +438,12 @@ const startPromptCycle = () => {
             homechk = homechk.replace(/\./g, "");///////////////////////////////////
             homechk = homechk.replace(/\bListening\b/gi, "").trim();
             homechk = homechk.replace(/\blistening\b/gi, "").trim();
-        
+            homechk = homechk.replace(/\,/g, "");
+            homechk = homechk.replace(/\?/g, "");
+            homechk = homechk.replace(/\-/g, "");
+            homechk = homechk.replace(/\:/g, "");
+            homechk = homechk.replace(/\'/g, "");
+            homechk = homechk.replace(/\"/g, "");
         if (homechk.trim().toLowerCase().includes("home screen") || homechk.trim().toLowerCase().includes("home  screen")
         || homechk.trim().toLowerCase().includes("home") || homechk.trim().toLowerCase().includes("Home screen")) {
         
