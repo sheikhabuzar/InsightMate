@@ -101,14 +101,16 @@ const HomeScreen = () => {
 const Drawer = createDrawerNavigator();
  d19ca7fdb6172422b6d1fa34225d5455edff0d3c
 
-const HomeScreenContent = ({ navigateTo }) => {
+const HomeScreenContent = () => {
+  const router = useRouter();
+
   return (
     <View style={styles.container}>
       <Text style={styles.appName}>Insight Mate</Text>
       <View style={styles.featuresContainer}>
         <TouchableOpacity 
           style={styles.featureCard}
-          onPress={() => navigateTo('ObjectDetection')}
+          onPress={() => router.push('/ObjectDetection')}
         >
           <Image
             source={require('../assets/images/object.png')}
@@ -118,7 +120,7 @@ const HomeScreenContent = ({ navigateTo }) => {
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.featureCard}
-          onPress={() => navigateTo('map_object_detection')}
+          onPress={() => router.push('/map_object_detection')}
         >
           <Image
             source={require('../assets/images/Map.jpg')}
@@ -128,7 +130,7 @@ const HomeScreenContent = ({ navigateTo }) => {
         </TouchableOpacity>
         <TouchableOpacity 
           style={styles.featureCard}
-          onPress={() => navigateTo('AI')}
+          onPress={() => router.push('/AI')}
         >
           <Image
             source={require('../assets/images/AI.jpg')}
@@ -150,8 +152,6 @@ const HomeScreenContent = ({ navigateTo }) => {
 };
 
 const HomeScreen = () => {
-  const router = useRouter();
-
   useEffect(() => {
     const welcomeMessage = "Welcome to Insight Mate, How May I Help You?";
 
@@ -182,11 +182,12 @@ const HomeScreen = () => {
           console.log('Deepgram Response:', resultText);
 
           // Navigate based on the response
+          const router = useRouter();
           if (resultText.toLowerCase().includes('detect object')) {
             router.push('/ObjectDetection');
           } else if (resultText.toLowerCase().includes('open map')) {
             router.push('/MapScreen');
-          } else if (resultText.toLowerCase().includes('AI assistant')) {
+          } else if (resultText.toLowerCase().includes('ai assistant')) {
             router.push('/AI');
           }
         }, 3000); // Record for 3 seconds
@@ -224,6 +225,7 @@ const HomeScreen = () => {
       rate: 1.0
     });
   }, []);
+
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <Drawer.Navigator
@@ -231,24 +233,20 @@ const HomeScreen = () => {
           headerStyle: { backgroundColor: "#f2f2f2" },
           headerTintColor: "#212121",
           drawerActiveTintColor: "#007AFF",
-     drawerInactiveTintColor: "#333",
+          drawerInactiveTintColor: "#333",
           drawerStyle: { backgroundColor: "#f8f8f8", width: 250 },
         }}
       >
-        {/* Home Screen */}
         <Drawer.Screen
           name="Home"
+          component={HomeScreenContent}
           options={{
             title: "Home",
             drawerIcon: ({ color, size }) => (
               <Ionicons name="home-outline" size={size} color={color} />
             ),
           }}
-        >
-          {(props) => <HomeScreenContent {...props} />}
-        </Drawer.Screen>
-
-        {/* Profile Screen */}
+        />
         <Drawer.Screen
           name="Profile"
           component={ProfileScreen}
@@ -259,8 +257,6 @@ const HomeScreen = () => {
             ),
           }}
         />
-
-        {/* My Family */}
         <Drawer.Screen
           name="MyFamily"
           component={MyFamily}
@@ -274,8 +270,6 @@ const HomeScreen = () => {
             ),
           }}
         />
-
-        {/* Saved Locations */}
         <Drawer.Screen
           name="SavedLocations"
           component={SavedLocations}
@@ -289,7 +283,6 @@ const HomeScreen = () => {
             ),
           }}
         />
-        {/* Saved Locations */}
         <Drawer.Screen
           name="EmergencyContacts"
           component={EmergencyContacts}
@@ -303,8 +296,6 @@ const HomeScreen = () => {
             ),
           }}
         />
-
-        {/* Alerts */}
         <Drawer.Screen
           name="Alerts"
           component={Alerts}
@@ -318,8 +309,6 @@ const HomeScreen = () => {
             ),
           }}
         />
-
-        {/* Logout */}
         <Drawer.Screen
           name="Logout"
           component={Logout}
@@ -353,7 +342,7 @@ const styles = StyleSheet.create({
     marginBottom: 40,
   },
   featuresContainer: {
-    flexDirection: 'column', // Change to column for vertical stacking
+    flexDirection: 'column',
     justifyContent: 'center',
     alignItems: 'center',
     width: '100%',
