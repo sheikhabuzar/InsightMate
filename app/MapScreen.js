@@ -39,9 +39,16 @@ const GoogleMap = () => {
 
   useEffect(() => {
  
-   Speech.speak('Map Page');
-   initializeMap();
-    startRecording();
+   Speech.speak('Map Page', {
+    onDone: ()=>
+    {
+       initializeMap();
+
+       
+       startRecording();
+    }
+   });
+   
 
  // const cleanup = startPromptCycle();
  // return cleanup; 
@@ -332,7 +339,7 @@ const startPromptCycle = () => {
 
     
     setTimeout(async () => {
-      Speech.speak("Do you confirm this destination? Say 'yes' or 'no'.");
+      Speech.speak("Do you confirm destination");
       
       ////////////////////////////////////////////////
       ////////////////////////////////////////////
@@ -431,18 +438,26 @@ const startPromptCycle = () => {
         
               setDestination(destination);
               getDirections();
+              return;  ////////////////////////////
               
                   }   
                   else {
-                  Speech.speak("Please provide the destination again.");
-                      startRecording();
+
+                  Speech.speak('Please provide the destination again ', {
+                    onDone: ()=>
+                    {
+                        startRecording();
+                        return; ////////////////////////////////
+                    }
+                  });
+                     
              }
 
              
       }, 7000); // Record for 5 seconds
     } catch (error) {
       console.error("Error during recording:", error);
-      Speech.speak("An error occurred while recording.");
+      console.log("An error occurred while recording.");
     }
    
     }, 7000);
@@ -527,6 +542,7 @@ const startPromptCycle = () => {
     console.error('Error transcribing audio:', error);
    // throw error;
     startRecording();
+    return; ////////////////////////////////////////////////////////////////////
   }
 
   };

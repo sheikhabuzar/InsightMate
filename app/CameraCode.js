@@ -5,7 +5,7 @@ import { WebView } from 'react-native-webview';
 const CameraWebView = () => {
   return (
     <View style={{ flex: 1 }}>
-      <Text style={styles.heading}>Camera Webiew</Text>
+     
       <WebView
       source={{ uri: 'https://ShafqatWarraich.github.io/webcamera/web_cam.html' }}
       javaScriptEnabled={true}  // Enable JavaScript

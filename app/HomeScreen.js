@@ -4,8 +4,65 @@ import { useRouter } from 'expo-router';
 import * as Speech from 'expo-speech';
 import { Audio } from 'expo-av';
 import { Buffer } from 'buffer';
+import { createDrawerNavigator } from '@react-navigation/drawer';
+import { NavigationContainer } from '@react-navigation/native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { Ionicons } from '@expo/vector-icons';
+import ProfileScreen from './Profile';
+import Alerts from './Alerts';
+import MyFamily from './MyFamily';
+import SavedLocations from './SavedLocations';
+import Logout from './Logout';
+import EmergencyContacts from './EmergencyContacts';
 
 global.Buffer = global.Buffer || Buffer;
+
+const HomeScreenContent = ({ navigateTo }) => {
+  const router = useRouter();
+  return (
+    <View style={styles.container}>
+      <Text style={styles.appName}>Insight Mate</Text>
+      <View style={styles.featuresContainer}>
+        <TouchableOpacity
+          style={styles.featureCard}
+          onPress={() => router.push('ObjectDetection')}
+        >
+          <Image
+            source={require('../assets/images/object.png')}
+            style={styles.featureIcon}
+          />
+          <Text style={styles.featureText}>Object Detection</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.featureCard}
+          onPress={() => router.push('MapScreen')}
+        >
+          <Image
+            source={require('../assets/images/Map.jpg')}
+            style={styles.featureIcon}
+          />
+          <Text style={styles.featureText}>Map Navigation</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.featureCard}
+          onPress={() => router.push('AI')}
+        >
+          <Image
+            source={require('../assets/images/AI.jpg')}
+            style={styles.featureIcon}
+          />
+          <Text style={styles.featureText}>AI Assistant</Text>
+        </TouchableOpacity>
+      </View>
+      <TouchableOpacity style={styles.micIconContainer}>
+        <Image
+          source={require('../assets/images/mic.png')}
+          style={styles.micIcon}
+        />
+      </TouchableOpacity>
+    </View>
+  );
+};
 
 const HomeScreen = () => {
   const router = useRouter();
@@ -28,7 +85,7 @@ const HomeScreen = () => {
           Audio.RECORDING_OPTIONS_PRESET_HIGH_QUALITY
         );
         await recording.startAsync();
-        console.log('Recording started');
+        Speech.speak('Listening');
 
         setTimeout(async () => {
           if (recordingRef.current) {
@@ -43,17 +100,19 @@ const HomeScreen = () => {
             console.log('Deepgram Response:', resultText);
 
             // Navigate based on the response
-            if (resultText.toLowerCase().includes('open detection')) {
+            if (resultText.toLowerCase().includes('open detection')|| resultText.toLowerCase().includes('detection')
+            || resultText.toLowerCase().includes('object')) {
               router.push('/ObjectDetection');
-            } else if (resultText.toLowerCase().includes('open map')) {
+            } else if (resultText.toLowerCase().includes('open map') || resultText.toLowerCase().includes('map')) {
               router.push('/MapScreen');
-            } else if (resultText.toLowerCase().includes('open assistance')) {
+            } else if (resultText.toLowerCase().includes('open assistance') || resultText.toLowerCase().includes('assistance')
+            || resultText.toLowerCase().includes('ai')) {
               router.push('/AI');
             } else {
-              router.push('/HomeScreen');
+            startRecording();
             }
           }
-        }, 3000); // Record for 3 seconds
+        }, 7000); // Record for 7 seconds
       } catch (error) {
         console.error('Error during recording:', error);
       }
@@ -74,7 +133,6 @@ const HomeScreen = () => {
       return data.results?.channels[0]?.alternatives[0]?.transcript || '';
     };
 
-    // Speak the welcome message and start recording after it's done
     Speech.speak(welcomeMessage, {
       onDone: () => {
         console.log('Welcome message complete. Starting recording after delay...');
@@ -98,52 +156,107 @@ const HomeScreen = () => {
     };
   }, []);
 
-  const navigateTo = (screen) => {
-    router.push(`/${screen}`);
-  };
+  const Drawer = createDrawerNavigator();
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.appName}>Insight Mate</Text>
-      <View style={styles.featuresContainer}>
-        <TouchableOpacity
-          style={styles.featureCard}
-          onPress={() => navigateTo('ObjectDetection')}
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <Drawer.Navigator
+        screenOptions={{
+          headerStyle: { backgroundColor: '#f2f2f2' },
+          headerTintColor: '#212121',
+          drawerActiveTintColor: '#007AFF',
+          drawerInactiveTintColor: '#333',
+          drawerStyle: { backgroundColor: '#f8f8f8', width: 250 },
+        }}
+      >
+        <Drawer.Screen
+          name="Home"
+          options={{
+            title: 'Home',
+            drawerIcon: ({ color, size }) => (
+              <Ionicons name="home-outline" size={size} color={color} />
+            ),
+          }}
         >
-          <Image
-            source={require('../assets/images/object.png')}
-            style={styles.featureIcon}
-          />
-          <Text style={styles.featureText}>Object Detection</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.featureCard}
-          onPress={() => navigateTo('MapScreen')}
-        >
-          <Image
-            source={require('../assets/images/Map.jpg')}
-            style={styles.featureIcon}
-          />
-          <Text style={styles.featureText}>Map Navigation</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.featureCard}
-          onPress={() => navigateTo('LocationScreen')}
-        >
-          <Image
-            source={require('../assets/images/AI.jpg')}
-            style={styles.featureIcon}
-          />
-          <Text style={styles.featureText}>AI Assistant</Text>
-        </TouchableOpacity>
-      </View>
-      <TouchableOpacity style={styles.micIconContainer}>
-        <Image
-          source={require('../assets/images/mic.png')}
-          style={styles.micIcon}
+          {(props) => <HomeScreenContent {...props} />}
+        </Drawer.Screen>
+        <Drawer.Screen
+          name="Profile"
+          component={ProfileScreen}
+          options={{
+            title: 'Profile',
+            drawerIcon: ({ color, size }) => (
+              <Ionicons name="person-outline" size={size} color={color} />
+            ),
+          }}
         />
-      </TouchableOpacity>
-    </View>
+        <Drawer.Screen
+          name="MyFamily"
+          component={MyFamily}
+          options={{
+            title: 'My Family',
+            drawerIcon: () => (
+              <Image
+                source={require('../assets/images/family.jpg')}
+                style={{ width: 24, height: 24 }}
+              />
+            ),
+          }}
+        />
+        <Drawer.Screen
+          name="SavedLocations"
+          component={SavedLocations}
+          options={{
+            title: 'Saved Locations',
+            drawerIcon: () => (
+              <Image
+                source={require('../assets/images/Visitedlocation.png')}
+                style={{ width: 24, height: 24 }}
+              />
+            ),
+          }}
+        />
+        <Drawer.Screen
+          name="EmergencyContacts"
+          component={EmergencyContacts}
+          options={{
+            title: 'Emergency Contacts',
+            drawerIcon: () => (
+              <Image
+                source={require('../assets/images/emer.jpg')}
+                style={{ width: 24, height: 24 }}
+              />
+            ),
+          }}
+        />
+        <Drawer.Screen
+          name="Alerts"
+          component={Alerts}
+          options={{
+            title: 'Alerts',
+            drawerIcon: () => (
+              <Image
+                source={require('../assets/images/Alerts.png')}
+                style={{ width: 24, height: 24 }}
+              />
+            ),
+          }}
+        />
+        <Drawer.Screen
+          name="Logout"
+          component={Logout}
+          options={{
+            title: 'Logout',
+            drawerIcon: () => (
+              <Image
+                source={require('../assets/images/logout.png')}
+                style={{ width: 24, height: 24 }}
+              />
+            ),
+          }}
+        />
+      </Drawer.Navigator>
+    </GestureHandlerRootView>
   );
 };
 
@@ -182,8 +295,8 @@ const styles = StyleSheet.create({
     backgroundColor: 'transparent',
   },
   featureIcon: {
-    width: 40,
-    height: 40,
+    width: 60,
+    height: 60,
     marginBottom: 10,
   },
   featureText: {
