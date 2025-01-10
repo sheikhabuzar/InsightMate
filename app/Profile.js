@@ -1,81 +1,82 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ScrollView } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, TextInput, Button, Alert, StyleSheet, TouchableOpacity } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { MaterialIcons } from '@expo/vector-icons';
 
-const ProfileScreen = () => {
+const Profile = () => {
     const [profile, setProfile] = useState({
         name: '',
-        age: '',
         phone: '',
         address: '',
+        email: '', // Adding email field
     });
-    const [isEditing, setIsEditing] = useState(false);
+    const [editable, setEditable] = useState(false);
+    const [newName, setNewName] = useState('');
+    const [newPhone, setNewPhone] = useState('');
+    const [newAddress, setNewAddress] = useState('');
+    const [newEmail, setNewEmail] = useState(''); // New state for email
 
-    useEffect(() => {
-        loadProfile();
-    }, []);
-
+    // Load profile data from AsyncStorage when the component is mounted
     const loadProfile = async () => {
         try {
             const storedProfile = await AsyncStorage.getItem('userProfile');
             if (storedProfile) {
-                setProfile(JSON.parse(storedProfile));
+                const profileData = JSON.parse(storedProfile);
+                setProfile(profileData);
+                setNewName(profileData.name);
+                setNewPhone(profileData.phone);
+                setNewAddress(profileData.address);
+                setNewEmail(profileData.email); // Set email when loaded
             }
         } catch (error) {
             Alert.alert('Error', 'Failed to load profile');
         }
     };
 
+    // Save updated profile data to AsyncStorage
     const saveProfile = async () => {
+        const updatedProfile = {
+            name: newName,
+            phone: newPhone,
+            address: newAddress,
+            email: newEmail, // Save email too
+        };
+
         try {
-            await AsyncStorage.setItem('userProfile', JSON.stringify(profile));
-            Alert.alert('Success', 'Profile saved successfully!');
-            setIsEditing(false);
+            await AsyncStorage.setItem('userProfile', JSON.stringify(updatedProfile));
+            setProfile(updatedProfile); // Update the state to reflect changes
+            setEditable(false); // Disable editing mode
+            Alert.alert('Success', 'Profile updated successfully');
         } catch (error) {
             Alert.alert('Error', 'Failed to save profile');
         }
     };
 
+    useEffect(() => {
+        loadProfile(); // Load profile data on component mount
+    }, []);
+
     return (
-        <ScrollView contentContainerStyle={styles.container}>
+        <View style={styles.container}>
             <Text style={styles.header}>Profile</Text>
 
             <View style={styles.inputContainer}>
-                <Text style={styles.label}>Full Name</Text>
+                <Text style={styles.label}>Name</Text>
                 <TextInput
                     style={styles.input}
-                    value={profile.name}
-                    onChangeText={(text) => setProfile({ ...profile, name: text })}
-                    editable={isEditing}
-                    accessible={true}
-                    accessibilityLabel="Full Name"
+                    value={editable ? newName : profile.name}
+                    onChangeText={setNewName}
+                    editable={editable}
                 />
             </View>
 
             <View style={styles.inputContainer}>
-                <Text style={styles.label}>Age</Text>
+                <Text style={styles.label}>Phone</Text>
                 <TextInput
                     style={styles.input}
-                    value={profile.age}
-                    onChangeText={(text) => setProfile({ ...profile, age: text })}
-                    keyboardType="numeric"
-                    editable={isEditing}
-                    accessible={true}
-                    accessibilityLabel="Age"
-                />
-            </View>
-
-            <View style={styles.inputContainer}>
-                <Text style={styles.label}>Phone Number</Text>
-                <TextInput
-                    style={styles.input}
-                    value={profile.phone}
-                    onChangeText={(text) => setProfile({ ...profile, phone: text })}
+                    value={editable ? newPhone : profile.phone}
+                    onChangeText={setNewPhone}
+                    editable={editable}
                     keyboardType="phone-pad"
-                    editable={isEditing}
-                    accessible={true}
-                    accessibilityLabel="Phone Number"
                 />
             </View>
 
@@ -83,82 +84,80 @@ const ProfileScreen = () => {
                 <Text style={styles.label}>Address</Text>
                 <TextInput
                     style={styles.input}
-                    value={profile.address}
-                    onChangeText={(text) => setProfile({ ...profile, address: text })}
-                    editable={isEditing}
-                    accessible={true}
-                    accessibilityLabel="Address"
+                    value={editable ? newAddress : profile.address}
+                    onChangeText={setNewAddress}
+                    editable={editable}
                 />
             </View>
 
-            {isEditing ? (
-                <TouchableOpacity style={styles.saveButton} onPress={saveProfile} accessible={true} accessibilityLabel="Save Profile">
-                    <Text style={styles.buttonText}>Save</Text>
-                </TouchableOpacity>
-            ) : (
-                <TouchableOpacity style={styles.editButton} onPress={() => setIsEditing(true)} accessible={true} accessibilityLabel="Edit Profile">
-                    <MaterialIcons name="edit" size={24} color="#fff" />
-                    <Text style={styles.buttonText}>Edit</Text>
-                </TouchableOpacity>
-            )}
-        </ScrollView>
+            {/* Adding Gmail (Email) input */}
+            <View style={styles.inputContainer}>
+                <Text style={styles.label}>Email</Text>
+                <TextInput
+                    style={styles.input}
+                    value={editable ? newEmail : profile.email}
+                    onChangeText={setNewEmail}
+                    editable={editable}
+                    keyboardType="email-address"
+                />
+            </View>
+
+            {/* Custom Button Styling */}
+            <TouchableOpacity
+                style={[styles.button, { backgroundColor: '#121721' }]}
+                onPress={editable ? saveProfile : () => setEditable(true)}
+            >
+                <Text style={styles.buttonText}>{editable ? 'Save Profile' : 'Edit Profile'}</Text>
+            </TouchableOpacity>
+        </View>
     );
 };
 
 const styles = StyleSheet.create({
     container: {
-        flexGrow: 1,
+        flex: 1,
+        justifyContent: 'center',
         padding: 20,
-        backgroundColor: '#f9f9f9',
-        alignItems: 'center',
+        backgroundColor: '#F7F7F7', // Light background color
     },
     header: {
         fontSize: 28,
         fontWeight: 'bold',
-        color: '#333',
-        marginBottom: 20,
+        marginBottom: 30,
+        textAlign: 'center',
+        color: '#121721', // Dark header color
     },
     inputContainer: {
-        width: '100%',
         marginBottom: 15,
+        paddingHorizontal: 10,
     },
     label: {
-        fontSize: 16,
-        fontWeight: 'bold',
-        color: '#555',
-        marginBottom: 5,
+        fontSize: 18,
+        marginBottom: 6,
+        color: '#121721', // Label color
     },
     input: {
-        width: '100%',
-        padding: 12,
+        height: 45,
+        borderColor: '#D3D3D3',
         borderWidth: 1,
-        borderColor: '#ccc',
-        borderRadius: 8,
-        backgroundColor: '#fff',
+        borderRadius: 10,
+        paddingLeft: 10,
+        backgroundColor: '#FFF',
         fontSize: 16,
+        color: '#333',
     },
-    editButton: {
-        flexDirection: 'row',
+    button: {
+        marginTop: 20,
+        paddingVertical: 12,
+        borderRadius: 8,
+        justifyContent: 'center',
         alignItems: 'center',
-        backgroundColor: '#121721',
-        paddingVertical: 12,
-        paddingHorizontal: 20,
-        borderRadius: 8,
-        marginTop: 20,
-    },
-    saveButton: {
-        backgroundColor: '#28a745',
-        paddingVertical: 12,
-        paddingHorizontal: 20,
-        borderRadius: 8,
-        marginTop: 20,
     },
     buttonText: {
-        color: '#fff',
+        color: '#FFF',
         fontSize: 18,
         fontWeight: 'bold',
-        marginLeft: 10,
     },
 });
 
-export default ProfileScreen;
+export default Profile;
