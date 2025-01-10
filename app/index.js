@@ -2,12 +2,14 @@ import React, { useEffect } from 'react';
 import { View, StyleSheet, Animated } from 'react-native';
 import { useRouter } from 'expo-router';
 import * as Speech from 'expo-speech';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const Splash = () => {
   const router = useRouter();
   const fadeAnim = new Animated.Value(0); // Initial opacity value
 
   useEffect(() => {
+
     // Speak welcome message
     Speech.speak('Welcome to Insight Mate', {
       onDone: () => {
@@ -21,8 +23,36 @@ const Splash = () => {
             router.replace('/HomeScreen'); // Adjust path based on your app structure
           }, 1500); // Add delay before navigating
         });
-      },
+      }
+    }); // Fixed closing parenthesis for Speech.speak
+
+    const checkLoginStatus = async () => {
+      try {
+        const userPhoneNumber = await AsyncStorage.getItem('userPhoneNumber');
+        const userPassword = await AsyncStorage.getItem('userPassword');
+
+        setTimeout(() => {
+          if (userPhoneNumber && userPassword) {
+            router.replace('/HomeScreen'); // User is logged in, go to HomeScreen
+          } else {
+            router.replace('/Login'); // User is NOT logged in, go to Login screen
+          }
+        }, 1500); // Short delay after animation
+      } catch (error) {
+        console.error('Error checking login status:', error);
+        router.replace('/Login'); // Default to login on error
+      }
+    };
+
+    // Fade in the splash logo and add delay before navigation
+    Animated.timing(fadeAnim, {
+      toValue: 1,
+      duration: 3000, // Fade-in duration
+      useNativeDriver: true,
+    }).start(() => {
+      checkLoginStatus();
     });
+
   }, []);
 
   return (
@@ -52,7 +82,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#121721', // Match the background with the image
   },
   imageWrapper: {
-    width: 220, // Slightly larger than the image
+    width: 220,
     height: 220,
     justifyContent: 'center',
     alignItems: 'center',
@@ -67,7 +97,7 @@ const styles = StyleSheet.create({
   image: {
     width: 200,
     height: 200,
-    borderRadius: 100, // Smooth the image edges
+    borderRadius: 100,
     resizeMode: 'contain', // Ensure the image fits well
   },
 });

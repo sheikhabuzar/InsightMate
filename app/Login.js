@@ -4,7 +4,7 @@ import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Regular expression for validating phone number (example for US-based format)
-const phoneNumberRegex = /^[0-9]{10}$/;
+const phoneNumberRegex = /^[0-9]{11}$/;
 
 // Regular expression for validating strong password
 const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*])[A-Za-z\d!@#$%^&*]{8,}$/;
@@ -13,18 +13,21 @@ const Login = () => {
   const router = useRouter();
   const [phoneNumber, setPhoneNumber] = useState('');
   const [password, setPassword] = useState('');
+  const [email, setEmail] = useState('');  // Add email state
   const [isPasswordVisible, setPasswordVisible] = useState(false);
+
   const handleLogin = async () => {
-    if (!phoneNumber || !password) {
-      Alert.alert('Error', 'Please fill in both fields.');
+    await AsyncStorage.setItem('userLoggedIn', 'true'); // Add this line
+    if (!phoneNumber || !password || !email) { // Check email as well
+      Alert.alert('Error', 'Please fill in all fields.');
       return;
     }
-  
+
     if (!phoneNumberRegex.test(phoneNumber)) {
       Alert.alert('Invalid Phone Number', 'Please enter a valid 10-digit phone number.');
       return;
     }
-  
+
     if (!passwordRegex.test(password)) {
       Alert.alert(
         'Weak Password',
@@ -32,18 +35,27 @@ const Login = () => {
       );
       return;
     }
-  
-    // Retrieve the saved credentials from AsyncStorage
+
     try {
-      const savedPhoneNumber = await AsyncStorage.getItem('userPhoneNumber');  // Updated key
-      const savedPassword = await AsyncStorage.getItem('userPassword');  // Updated key
-  
-      console.log('Saved Phone Number:', savedPhoneNumber);
-      console.log('Saved Password:', savedPassword);
-  
+      const savedPhoneNumber = await AsyncStorage.getItem('userPhoneNumber');
+      const savedPassword = await AsyncStorage.getItem('userPassword');
+
       if (savedPhoneNumber === phoneNumber && savedPassword === password) {
         console.log('Logged in successfully');
-        router.push('/HomeScreen'); // or the appropriate screen
+
+        // Store login state
+        await AsyncStorage.setItem('userLoggedIn', 'true');
+        
+        // Save profile details including email
+        const profileDetails = {
+          name: 'User Name',  // you can fetch these from your signup or other sources
+          phone: phoneNumber,
+          address: 'User Address', // You can add address or other details here
+          email: email, // Save email as well
+        };
+        await AsyncStorage.setItem('userProfile', JSON.stringify(profileDetails)); // Save profile
+
+        router.replace('/HomeScreen'); // Navigate to home screen
       } else {
         Alert.alert('Invalid Credentials', 'The phone number or password is incorrect.');
       }
@@ -65,6 +77,16 @@ const Login = () => {
         placeholderTextColor="#888"
         value={phoneNumber}
         onChangeText={setPhoneNumber}
+      />
+
+      {/* Email input */}
+      <TextInput
+        style={styles.input}
+        placeholder="Email"
+        keyboardType="email-address"
+        placeholderTextColor="#888"
+        value={email}
+        onChangeText={setEmail}  // Save the email
       />
 
       {/* Password input with show/hide functionality */}
