@@ -71,7 +71,7 @@ const HomeScreen = () => {
     // Speak the welcome message and start recording after it's done
     Speech.speak(welcomeMessage, {
       onDone: () => {
-        console.log('Welcome message complete. Starting recording after delay...');
+       // console.log('Welcome message complete. Starting recording after delay...');
        
         setTimeout(() => {
           startRecording();
@@ -124,10 +124,12 @@ const HomeScreen = () => {
           <Text style={styles.featureText}>AI Assistant</Text>
         </TouchableOpacity>
       </View>
-      <TouchableOpacity style={styles.micIconContainer}>
+      <TouchableOpacity style={styles.micIconContainer}
+      onPress={() => navigateTo('family')}>
         <Image
           source={require('../assets/images/mic.png')}
           style={styles.micIcon}
+         
         />
       </TouchableOpacity>
     </View>

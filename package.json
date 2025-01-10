@@ -17,7 +17,7 @@
   "dependencies": {
     "@deepgram/sdk": "^3.9.0",
     "@expo/vector-icons": "^14.0.2",
-    "@react-native-async-storage/async-storage": "^1.23.1",
+    "@react-native-async-storage/async-storage": "1.23.1",
     "@react-navigation/bottom-tabs": "^7.2.0",
     "@react-navigation/native": "^7.0.14",
     "axios": "^1.7.9",
@@ -33,7 +33,9 @@
     "expo-location": "^18.0.4",
     "expo-permissions": "^14.4.0",
     "expo-router": "~4.0.15",
+    "expo-screen-orientation": "~8.0.3",
     "expo-speech": "~13.0.0",
+    "expo-speech-recognition": "^1.1.0",
     "expo-splash-screen": "~0.29.18",
     "expo-status-bar": "~2.0.0",
     "expo-symbols": "~0.2.0",
