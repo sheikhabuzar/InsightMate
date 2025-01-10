@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Image } from 'react-native';
 import { useRouter } from 'expo-router';
 import * as Speech from 'expo-speech';
@@ -9,9 +9,10 @@ global.Buffer = global.Buffer || Buffer;
 
 const HomeScreen = () => {
   const router = useRouter();
+  const recordingRef = useRef(null); // Reference to manage recording instance
 
   useEffect(() => {
-    const welcomeMessage = "Welcome to Insight Mate, How May I Help You?";
+    const welcomeMessage = "Home Page";
 
     const startRecording = async () => {
       try {
@@ -22,6 +23,7 @@ const HomeScreen = () => {
         }
 
         const recording = new Audio.Recording();
+        recordingRef.current = recording; // Store the recording instance
         await recording.prepareToRecordAsync(
           Audio.RECORDING_OPTIONS_PRESET_HIGH_QUALITY
         );
@@ -29,25 +31,29 @@ const HomeScreen = () => {
         console.log('Recording started');
 
         setTimeout(async () => {
-          await recording.stopAndUnloadAsync();
-          console.log('Recording stopped');
-          const uri = recording.getURI();
-          const file = await fetch(uri);
-          const buffer = await file.arrayBuffer();
+          if (recordingRef.current) {
+            await recording.stopAndUnloadAsync();
+            console.log('Recording stopped');
+            const uri = recording.getURI();
+            const file = await fetch(uri);
+            const buffer = await file.arrayBuffer();
 
-          // Send the audio buffer to Deepgram API
-          const resultText = await sendToDeepgram(buffer);
-          console.log('Deepgram Response:', resultText);
+            // Send the audio buffer to Deepgram API
+            const resultText = await sendToDeepgram(buffer);
+            console.log('Deepgram Response:', resultText);
 
-          // Navigate based on the response
-          if (resultText.toLowerCase().includes('detect object')) {
-            router.push('/ObjectDetection');
-          } else if (resultText.toLowerCase().includes('open map')) {
-            router.push('/MapScreen');
-          } else {
-            router.push('/AI');
+            // Navigate based on the response
+            if (resultText.toLowerCase().includes('open detection')) {
+              router.push('/ObjectDetection');
+            } else if (resultText.toLowerCase().includes('open map')) {
+              router.push('/MapScreen');
+            } else if (resultText.toLowerCase().includes('open assistance')) {
+              router.push('/AI');
+            } else {
+              router.push('/HomeScreen');
+            }
           }
-        }, 3000); // Record for 5 seconds
+        }, 3000); // Record for 3 seconds
       } catch (error) {
         console.error('Error during recording:', error);
       }
@@ -72,16 +78,24 @@ const HomeScreen = () => {
     Speech.speak(welcomeMessage, {
       onDone: () => {
         console.log('Welcome message complete. Starting recording after delay...');
-       
         setTimeout(() => {
           startRecording();
-        }, 100); // Add a delay of 1 second before starting the recording
+        }, 100); // Add a small delay before starting the recording
       },
-      
       pitch: 1.0,
-      rate: 1.0
-
+      rate: 1.0,
     });
+
+    // Cleanup function
+    return () => {
+      if (recordingRef.current) {
+        recordingRef.current.stopAndUnloadAsync().catch((err) => {
+          console.log('Error during cleanup:', err);
+        });
+        recordingRef.current = null;
+      }
+      console.log('Cleanup complete: HomeScreen unmounted.');
+    };
   }, []);
 
   const navigateTo = (screen) => {
@@ -90,10 +104,9 @@ const HomeScreen = () => {
 
   return (
     <View style={styles.container}>
-      
       <Text style={styles.appName}>Insight Mate</Text>
       <View style={styles.featuresContainer}>
-        <TouchableOpacity 
+        <TouchableOpacity
           style={styles.featureCard}
           onPress={() => navigateTo('ObjectDetection')}
         >
@@ -113,9 +126,9 @@ const HomeScreen = () => {
           />
           <Text style={styles.featureText}>Map Navigation</Text>
         </TouchableOpacity>
-        <TouchableOpacity 
+        <TouchableOpacity
           style={styles.featureCard}
-          onPress={() => navigateTo('AI')}
+          onPress={() => navigateTo('LocationScreen')}
         >
           <Image
             source={require('../assets/images/AI.jpg')}
@@ -137,30 +150,24 @@ const HomeScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'flex-start', // Align content from the top
+    justifyContent: 'flex-start',
     alignItems: 'center',
-    backgroundColor: '#f2f2f2', // Background color of the screen
-    paddingTop: 30, // Adding top padding for the app name
-  },
-  welcomeMessage: {
-    fontSize: 18,
-    color: '#333',
-    marginBottom: 20, // Space between welcome message and app name
-    textAlign: 'center',
+    backgroundColor: '#f2f2f2',
+    paddingTop: 30,
   },
   appName: {
     fontSize: 32,
     fontWeight: 'bold',
     color: '#333',
-    marginBottom: 40, // Space between app name and feature buttons
+    marginBottom: 40,
     textAlign: 'center',
   },
   featuresContainer: {
-    flexDirection: 'column', // Change from row to column for vertical stacking
-    justifyContent: 'center', // Center the items vertically
-    alignItems: 'center', // Center the items horizontally
-    width: '100%', // Use full width for the container
-    marginBottom: 30, // Space between features and mic icon
+    flexDirection: 'column',
+    justifyContent: 'center',
+    alignItems: 'center',
+    width: '100%',
+    marginBottom: 30,
   },
   featureCard: {
     alignItems: 'center',
@@ -168,19 +175,19 @@ const styles = StyleSheet.create({
     paddingVertical: 20,
     paddingHorizontal: 20,
     borderRadius: 10,
-    width: '80%', // Adjust width to fit the cards vertically
-    marginBottom: 20, // Space between cards
-    elevation: 3, // Optional shadow for the cards
+    width: '80%',
+    marginBottom: 20,
+    elevation: 3,
     marginTop: 30,
-    backgroundColor: 'transparent', // Remove blue background
+    backgroundColor: 'transparent',
   },
   featureIcon: {
     width: 40,
     height: 40,
-    marginBottom: 10, // Space between icon and text
+    marginBottom: 10,
   },
   featureText: {
-    color: '#333', // Set text color to dark for better readability
+    color: '#333',
     fontSize: 16,
     fontWeight: 'bold',
   },
@@ -188,12 +195,12 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: 20,
     left: 20,
-    elevation: 10, // Adds elevation to make the mic hover
+    elevation: 10,
   },
   micIcon: {
     width: 50,
     height: 50,
-    borderRadius: 25, // Circular icon
+    borderRadius: 25,
   },
 });
 

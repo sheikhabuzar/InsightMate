@@ -1,21 +1,27 @@
 import React, { useEffect } from 'react';
 import { View, StyleSheet, Animated } from 'react-native';
 import { useRouter } from 'expo-router';
+import * as Speech from 'expo-speech';
 
 const Splash = () => {
   const router = useRouter();
   const fadeAnim = new Animated.Value(0); // Initial opacity value
 
   useEffect(() => {
-    // Fade in the splash logo and add delay before navigation
-    Animated.timing(fadeAnim, {
-      toValue: 1,
-      duration: 3000, // Increased fade-in duration
-      useNativeDriver: true,
-    }).start(() => {
-      setTimeout(() => {
-        router.replace('/HomeScreen'); // Adjust path based on your app structure
-      }, 1500); // Add delay before navigating
+    // Speak welcome message
+    Speech.speak('Welcome to Insight Mate', {
+      onDone: () => {
+        // Fade in the splash logo and add delay before navigation
+        Animated.timing(fadeAnim, {
+          toValue: 1,
+          duration: 3000, // Increased fade-in duration
+          useNativeDriver: true,
+        }).start(() => {
+          setTimeout(() => {
+            router.replace('/HomeScreen'); // Adjust path based on your app structure
+          }, 1500); // Add delay before navigating
+        });
+      },
     });
   }, []);
 
