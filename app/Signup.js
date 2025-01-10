@@ -5,8 +5,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Regex for email validation
 const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/;
-// Regex for phone number validation (simple format)
-const phoneNumberRegex = /^[0-9]{10}$/; // 10 digits, can adjust based on your country
+// Regex for phone number validation (11 digits)
+const phoneNumberRegex = /^[0-9]{11}$/;
 
 // Function to validate password strength
 const isPasswordStrong = (password) => {
@@ -24,7 +24,7 @@ const Signup = () => {
 
   const handleSignup = async () => {
     if (!phoneNumber || !phoneNumberRegex.test(phoneNumber)) {
-      Alert.alert('Invalid Phone Number', 'Please enter a valid 10-digit phone number');
+      Alert.alert('Invalid Phone Number', 'Please enter a valid 11-digit phone number');
       return;
     }
 
@@ -43,11 +43,10 @@ const Signup = () => {
       return;
     }
 
-    // Save the user information to AsyncStorage
     try {
       await AsyncStorage.setItem('userPhoneNumber', phoneNumber);
       await AsyncStorage.setItem('userEmail', email);
-      await AsyncStorage.setItem('userPassword', password);  // Make sure to hash the password in a real-world scenario.
+      await AsyncStorage.setItem('userPassword', password);
     } catch (error) {
       Alert.alert('Error', 'Something went wrong while saving your data.');
     }
@@ -98,13 +97,6 @@ const Signup = () => {
       <TouchableOpacity style={styles.signupButton} onPress={handleSignup}>
         <Text style={styles.signupButtonText}>Sign Up</Text>
       </TouchableOpacity>
-
-      <View style={styles.loginContainer}>
-        <Text style={styles.loginText}>Already have an account? </Text>
-        <TouchableOpacity onPress={() => router.push('/Login')}>
-          <Text style={styles.loginLink}>Login</Text>
-        </TouchableOpacity>
-      </View>
     </View>
   );
 };
@@ -132,7 +124,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 15,
     fontSize: 16,
     backgroundColor: '#fff',
-    marginBottom: 15, // Adds space between inputs
+    marginBottom: 15,
   },
   signupButton: {
     width: '100%',
@@ -146,20 +138,6 @@ const styles = StyleSheet.create({
   signupButtonText: {
     color: '#fff',
     fontSize: 18,
-    fontWeight: 'bold',
-  },
-  loginContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  loginText: {
-    fontSize: 14,
-    color: '#333',
-  },
-  loginLink: {
-    fontSize: 14,
-    color: '#007BFF',
     fontWeight: 'bold',
   },
 });

@@ -12,10 +12,9 @@ const Layout = () => {
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        const userPhoneNumber = await AsyncStorage.getItem('userPhoneNumber');
-        const userPassword = await AsyncStorage.getItem('userPassword');
+        const isLoggedIn = await AsyncStorage.getItem('userLoggedIn');
 
-        if (userPhoneNumber && userPassword) {
+        if (isLoggedIn === 'true') {
           router.replace('/HomeScreen'); // Navigate to HomeScreen if logged in
         } else {
           router.replace('/Login'); // Navigate to Login if not logged in
