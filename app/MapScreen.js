@@ -331,7 +331,7 @@ const startPromptCycle = () => {
             homechk = homechk.replace(/\"/g, "");
         
         if (homechk.trim().toLowerCase().includes("home screen") || homechk.trim().toLowerCase().includes("home  screen")
-        || homechk.trim().toLowerCase().includes("home") || homechk.trim().toLowerCase().includes("Home screen")) {
+        || homechk.trim().toLowerCase().includes("home Page") || homechk.trim().toLowerCase().includes("Home screen")) {
         
           Speech.stop();
                  // Navigate to HomeScreen
@@ -372,7 +372,9 @@ const startPromptCycle = () => {
 
     
     setTimeout(async () => {
-      Speech.speak("Do you confirm destination");
+      Speech.speak('Do you confirm destination');
+
+       
       
       ////////////////////////////////////////////////
       ////////////////////////////////////////////
@@ -497,8 +499,12 @@ const startPromptCycle = () => {
       console.error("Error during recording:", error);
       console.log("An error occurred while recording.");
     }
+
+    
    
     }, 7000);
+
+    
   };
 
 
@@ -730,6 +736,9 @@ const startPromptCycle = () => {
         />
         <TouchableOpacity style={styles.button} onPress={getDirections}>
           <Text style={styles.buttonText}> Directions</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.button} onPress={handleBackButton}>
+          <Text style={styles.buttonText}> Back Button</Text>
         </TouchableOpacity>
       </View>
       <MapView style={styles.map} region={region} showsUserLocation={true}>

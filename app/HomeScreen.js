@@ -79,6 +79,23 @@ const HomeScreen = () => {
           return;
         }
 
+
+            ///////////////////////////////////////////////////////
+     if (recordingRef.current) {
+           try {
+              if (recordingRef.current.getStatusAsync) {
+            const status = await recordingRef.current.getStatusAsync();
+           if (status.isRecording) {
+             await recordingRef.current.stopAndUnloadAsync();
+           }
+            }
+              recordingRef.current = null; // Clear the reference after stopping
+         } catch (error) {
+            console.error("Error while stopping/unloading recording:", error);
+                }
+           }
+/////////////////////////////////////
+
         const recording = new Audio.Recording();
         recordingRef.current = recording; // Store the recording instance
         await recording.prepareToRecordAsync(
