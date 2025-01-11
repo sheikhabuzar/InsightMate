@@ -16,16 +16,27 @@ import Logout from './Logout';
 import EmergencyContacts from './EmergencyContacts';
 
 global.Buffer = global.Buffer || Buffer;
+const recordingRef = useRef(null); 
+
 
 const HomeScreenContent = ({ navigateTo }) => {
   const router = useRouter();
+
+  const handleNavigation = (route) => {
+
+    Speech.stop();
+
+    if (navigateTo) onNavigate();
+    router.push(route);
+  };
+
   return (
     <View style={styles.container}>
       <Text style={styles.appName}>Insight Mate</Text>
       <View style={styles.featuresContainer}>
         <TouchableOpacity
           style={styles.featureCard}
-          onPress={() => router.push('ObjectDetection')}
+          onPress={() => handleNavigation('ObjectDetection')}
         >
           <Image
             source={require('../assets/images/object.png')}
@@ -35,7 +46,7 @@ const HomeScreenContent = ({ navigateTo }) => {
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.featureCard}
-          onPress={() => router.push('MapScreen')}
+          onPress={() => handleNavigation('MapScreen')}
         >
           <Image
             source={require('../assets/images/Map.jpg')}
@@ -45,7 +56,7 @@ const HomeScreenContent = ({ navigateTo }) => {
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.featureCard}
-          onPress={() => router.push('AI')}
+          onPress={() => handleNavigation('AI')}
         >
           <Image
             source={require('../assets/images/AI.jpg')}
@@ -58,6 +69,8 @@ const HomeScreenContent = ({ navigateTo }) => {
         <Image
           source={require('../assets/images/mic.png')}
           style={styles.micIcon}
+          onPress
+          
         />
       </TouchableOpacity>
     </View>
@@ -66,12 +79,35 @@ const HomeScreenContent = ({ navigateTo }) => {
 
 const HomeScreen = () => {
   const router = useRouter();
-  const recordingRef = useRef(null); // Reference to manage recording instance
+  // Reference to manage recording instance
 
   useEffect(() => {
     const welcomeMessage = "Home Page";
 
-    const startRecording = async () => {
+    Speech.speak(welcomeMessage, {
+      onDone: () => {
+        console.log('Welcome message complete. Starting recording after delay...');
+        setTimeout(() => {
+          startRecording();
+        }, 500); // Add a small delay before starting the recording
+      },
+      pitch: 1.0,
+      rate: 1.0,
+    });
+    
+    // Cleanup function
+    return () => {
+      if (recordingRef.current) {
+        recordingRef.current.stopAndUnloadAsync().catch((err) => {
+          console.log('Error during cleanup:', err);
+        });
+        recordingRef.current = null;
+      }
+      console.log('Cleanup complete: HomeScreen unmounted.');
+    };
+  }, []);
+
+const startRecording = async () => {
       try {
         const { granted } = await Audio.requestPermissionsAsync();
         if (!granted) {
@@ -81,7 +117,7 @@ const HomeScreen = () => {
 
 
             ///////////////////////////////////////////////////////
-     if (recordingRef.current) {
+          if (recordingRef.current) {
            try {
               if (recordingRef.current.getStatusAsync) {
             const status = await recordingRef.current.getStatusAsync();
@@ -108,6 +144,7 @@ const HomeScreen = () => {
           if (recordingRef.current) {
             await recording.stopAndUnloadAsync();
             console.log('Recording stopped');
+
             const uri = recording.getURI();
             const file = await fetch(uri);
             const buffer = await file.arrayBuffer();
@@ -129,7 +166,7 @@ const HomeScreen = () => {
             startRecording();
             }
           }
-        }, 7000); // Record for 7 seconds
+        }, 10000); // Record for 7 seconds
       } catch (error) {
         console.error('Error during recording:', error);
       }
@@ -149,29 +186,8 @@ const HomeScreen = () => {
       const data = await response.json();
       return data.results?.channels[0]?.alternatives[0]?.transcript || '';
     };
+  
 
-    Speech.speak(welcomeMessage, {
-      onDone: () => {
-        console.log('Welcome message complete. Starting recording after delay...');
-        setTimeout(() => {
-          startRecording();
-        }, 100); // Add a small delay before starting the recording
-      },
-      pitch: 1.0,
-      rate: 1.0,
-    });
-
-    // Cleanup function
-    return () => {
-      if (recordingRef.current) {
-        recordingRef.current.stopAndUnloadAsync().catch((err) => {
-          console.log('Error during cleanup:', err);
-        });
-        recordingRef.current = null;
-      }
-      console.log('Cleanup complete: HomeScreen unmounted.');
-    };
-  }, []);
 
   const Drawer = createDrawerNavigator();
 
