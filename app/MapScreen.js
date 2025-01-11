@@ -11,6 +11,7 @@ import { useRouter } from 'expo-router';
 import { Audio } from "expo-av";
 import * as FileSystem from "expo-file-system";
 import axios from 'axios';
+import ObjectDetectionScreen from "./objectmap";
 
 
 
@@ -26,7 +27,10 @@ const GoogleMap = () => {
   const [directions, setDirections] = useState([]);
   const [footerVisible, setFooterVisible] = useState(false);
   const [travelSummary, setTravelSummary] = useState({});
-  
+  const [showCamera, setShowCamera] = useState(false);
+const [directionsLoaded, setDirectionsLoaded] = useState(false);
+const [isDirectionsLoaded, setIsDirectionsLoaded] = useState(false);
+const [mapHeight, setMapHeight] = useState('80%');
   const GOOGLE_API_KEY = "AIzaSyBxCwHntkDBpBr_ZLIU4nBh4Ywi4rEUW58"; // Replace with your actual API key
   const revAccessToken = "02SVTgaqr-HbZO9N3-hPglv4aItscINrmNC98UyMT2ZjWsm17knqL_YtqjqVrAKs-fwEg-KDrNsEGfSkykvCKesxZQBlw"; //////////////
   let destination="";
@@ -161,7 +165,7 @@ const GoogleMap = () => {
         }
         
         setDestination(transcript);
-        //   setDirections(transcript);
+        // setDirections(transcript);
         
         Speech.speak(`You said: ${transcript}`, {
           onDone: () => confirmMessage(transcript),
@@ -427,61 +431,76 @@ const GoogleMap = () => {
   };
   
   const getDirections = async () => {
-    
     console.log(destination);
     if (!destination) {
       Alert.alert("Error", "Please enter a destination.");
       return;
     }
-    
+  
     try {
       const geoResult = await LocationGeocoding.geocodeAsync(destination);
       if (!geoResult.length) {
-        console.log('Destination not Found');
-        Speech.speak('Destination Not Found Please Select Again',{
-          onDone:()=>
-          {
-             startRecording();
-          }
-        },100);
+        console.log("Destination not Found");
+        Speech.speak("Destination Not Found. Please Select Again", {
+          onDone: () => {
+            startRecording();
+          },
+        }, 100);
         return;
       }
-      
+  
       const destinationCoords = {
         latitude: geoResult[0].latitude,
         longitude: geoResult[0].longitude,
       };
-      
-      
+  
       const directionsUrl = `https://maps.googleapis.com/maps/api/directions/json?origin=${currentLocation.latitude},${currentLocation.longitude}&destination=${destinationCoords.latitude},${destinationCoords.longitude}&key=${GOOGLE_API_KEY}`;
-      
+  
       const response = await fetch(directionsUrl);
       const data = await response.json();
-      console.log('2 : '+data.routes.length);
+      console.log("2 : " + data.routes.length);
       if (data.routes.length > 0) {
         const route = data.routes[0].overview_polyline.points;
         const decodedRoute = decodePolyline(route);
         setRouteCoords(decodedRoute);
-        
-        const steps = data.routes[0].legs[0].steps.map((step) => ({
-          instruction: removeHtmlTags(decode(step.html_instructions)),
-          end_location: step.end_location,
-        }));//
+  
+        const steps = data.routes[0].legs[0].steps.map((step) => {
+          let instruction = removeHtmlTags(decode(step.html_instructions));
+  
+          // Simplify instructions to only include "left" or "right"
+          if (instruction.toLowerCase().includes("left")) {
+            instruction = "Turn left";
+          } else if (instruction.toLowerCase().includes("right")) {
+            instruction = "Turn right";
+          } 
+  
+          return {
+            instruction: instruction,
+            end_location: step.end_location,
+          };
+        });
+  
         setDirections(steps);
         setFooterVisible(true);
-        
+  
         setTravelSummary({
           duration: data.routes[0].legs[0].duration.text,
           distance: data.routes[0].legs[0].distance.text,
-          arrivalTime: new Date(Date.now() + data.routes[0].legs[0].duration.value * 1000).toLocaleTimeString(),
+          arrivalTime: new Date(
+            Date.now() + data.routes[0].legs[0].duration.value * 1000
+          ).toLocaleTimeString(),
         });
-        
+  
+        // Speak the first step's instruction
         Speech.speak(steps[0].instruction);
+        setIsDirectionsLoaded(true);
+        setMapHeight('80%');
       }
     } catch (error) {
       Alert.alert("Error", "Failed to fetch directions.");
     }
   };
+  
   
   const decodePolyline = (encoded) => {
     let points = [];
@@ -527,36 +546,53 @@ const GoogleMap = () => {
   
   return (
     <View style={styles.container}>
-    <View style={styles.inputContainer}>
-    <TextInput
-    style={styles.input}
-    placeholder="Current Location"
-    value={currentAddress}
-    editable={false}
-    />
-    <TextInput
-    style={styles.input}
-    placeholder="Where to?"
-    value={destination1}
-    onChangeText={(text) => setDestination(text)} // Removed getSuggestions function call
-    />
-    <TouchableOpacity style={styles.button} onPress={getDirections}>
-    <Text style={styles.buttonText}> Directions</Text>
-    </TouchableOpacity>
-    <TouchableOpacity style={styles.button} onPress={handleBackButton}>
-    <Text style={styles.buttonText}> Back Button</Text>
-    </TouchableOpacity>
-    </View>
-    <MapView style={styles.map} region={region} showsUserLocation={true}>
-    {routeCoords.length > 1 && (
-      <>
-      <Marker coordinate={routeCoords[routeCoords.length - 1]} title="Destination" />
-      <Polyline coordinates={routeCoords} strokeWidth={4} strokeColor="blue" />
-      </>
-    )}
-    </MapView>
+      <View style={styles.inputContainer}>
+        <TextInput
+          style={styles.input}
+          placeholder="Current Location"
+          value={currentAddress}
+          editable={false}
+        />
+        <TextInput
+          style={styles.input}
+          placeholder="Where to?"
+          value={destination1}
+          onChangeText={(text) => setDestination(text)}
+        />
+        <TouchableOpacity style={styles.button} onPress={getDirections}>
+          <Text style={styles.buttonText}>Directions</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.button} onPress={handleBackButton}>
+          <Text style={styles.buttonText}>Back Button</Text>
+        </TouchableOpacity>
+      </View>
+  
+      <View style={{ flex: 1 }}>
+        {/* Map section (80% height initially) */}
+        <View style={{ flex: 1, height: mapHeight }}>
+          <MapView style={styles.map} region={region} showsUserLocation={true}>
+            {routeCoords.length > 1 && (
+              <>
+                <Marker coordinate={routeCoords[routeCoords.length - 1]} title="Destination" />
+                <Polyline coordinates={routeCoords} strokeWidth={4} strokeColor="blue" />
+              </>
+            )}
+          </MapView>
+        </View>
+  
+        
+        <View style={[styles.footerContainer, { height: isDirectionsLoaded ? '20%' : 0 }]}>
+         
+          {isDirectionsLoaded && (
+            <View style={styles.objectScreen}>
+           <ObjectDetectionScreen/>
+            </View>
+          )}
+        </View>
+      </View>
     </View>
   );
+  
 };
 
 const styles = StyleSheet.create({
@@ -566,7 +602,19 @@ const styles = StyleSheet.create({
   button: { backgroundColor: "#121721", padding: 10, borderRadius: 15, alignItems: "center" },
   buttonText: { color: "white" },
   map: { flex: 1 },
+  footerContainer: {
+    transition: 'height 0.3s ease-in-out',  // Smooth transition for height change
+    backgroundColor: 'lightgray',
+  },
+  objectScreen: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 10,
+    backgroundColor: 'white',
+  },
 });
+
 
 export default GoogleMap;
 

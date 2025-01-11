@@ -65,7 +65,8 @@ const HomeScreenContent = ({ navigateTo }) => {
           <Text style={styles.featureText}>AI Assistant</Text>
         </TouchableOpacity>
       </View>
-      <TouchableOpacity style={styles.micIconContainer}>
+      <TouchableOpacity style={styles.micIconContainer}
+      >
         <Image
           source={require('../assets/images/mic.png')}
           style={styles.micIcon}

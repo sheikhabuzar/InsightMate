@@ -13,7 +13,6 @@ const ObjectDetectionScreen = ({ navigation }) => {
   const detecting = useRef(true);
   const router = useRouter();
 
-  // Function to capture image from WebView
   const captureImage = async () => {
     if (!detecting.current) return;
     if (webviewRef.current) {
@@ -32,7 +31,6 @@ const ObjectDetectionScreen = ({ navigation }) => {
     }
   };
 
-  // Analyze the captured image using Google Vision API
   const analyzeImage = async (base64ImageData) => {
     try {
       const apiKey = 'AIzaSyCaREgPQjYUsrzG9HR37FK63RhS6hy5SSw';
@@ -44,11 +42,11 @@ const ObjectDetectionScreen = ({ navigation }) => {
             image: { content: base64ImageData },
             features: [
               {
-                type: 'LABEL_DETECTION', // Detect labels (objects, etc.)
+                type: 'LABEL_DETECTION',
                 maxResults: 10,
               },
               {
-                type: 'FACE_DETECTION', // Detect faces
+                type: 'FACE_DETECTION', 
                 maxResults: 5,
               },
             ],
@@ -77,10 +75,10 @@ const ObjectDetectionScreen = ({ navigation }) => {
           const labelNames = sortedLabels.map((label) => label.description);
           const sentenceParts = [];
 
-          // Add remaining labels
-          sentenceParts.push(`Detected objects are ${labelNames.join(' or ')}.`);
+          // Add remaining labels Detected 
+          sentenceParts.push(` ${labelNames.join(' or ')}.`);
           Speech.speak(sentenceParts.join('. '));
-
+          Speech.speak('Detected');
           // Track repeated labels
           if (
             previousLabels.current.length > 0 &&
@@ -93,18 +91,14 @@ const ObjectDetectionScreen = ({ navigation }) => {
 
           previousLabels.current = sortedLabels;
 
-          if (sameLabelCount.current >= 3) {
-            detecting.current = false;
-            sameLabelCount.current = 0;
-            router.push('/AskContinueScreen'); // Navigate to the new screen
-          }
+          
         } else {
           setLabels([]);
           console.log('No labels detected.');
         }
       }
     } catch (error) {
-     // console.error('Error analyzing image:', error.message);
+    //  console.error('Error analyzing image:', error.message);
     }
   };
 
@@ -126,8 +120,18 @@ const ObjectDetectionScreen = ({ navigation }) => {
   }, []);
 
   return (
-    <View style={{ flex: 1 }}>
-      <Text style={styles.heading}>Object Detection</Text>
+    <View >
+       {labels.length > 0 && (
+        <View style={styles.labelsContainer}>
+          <Text style={styles.label}>Detected Labels:</Text>
+          {labels.map((label, index) => (
+            <Text key={index} style={styles.labelText}>
+              {label.description}
+            </Text>
+          ))}
+        </View>
+      )}
+     
       <WebView
         ref={webviewRef}
         source={{ uri: 'https://ShafqatWarraich.github.io/webcamera/web_cam.html' }}
@@ -140,16 +144,7 @@ const ObjectDetectionScreen = ({ navigation }) => {
         onError={(error) => console.log(error)}
       />
 
-      {labels.length > 0 && (
-        <View style={styles.labelsContainer}>
-          <Text style={styles.label}>Detected Labels:</Text>
-          {labels.map((label, index) => (
-            <Text key={index} style={styles.labelText}>
-              {label.description}
-            </Text>
-          ))}
-        </View>
-      )}
+     
     </View>
   );
 };
