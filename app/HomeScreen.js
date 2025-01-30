@@ -15,7 +15,9 @@ import SavedLocations from './SavedLocations';
 import Logout from './Logout';
 import EmergencyContacts from './EmergencyContacts';
 
-global.Buffer = global.Buffer || Buffer;
+import * as FileSystem from "expo-file-system";
+import axios from 'axios';
+
 const recordingRef = useRef(null); 
 
 
@@ -135,11 +137,26 @@ const startRecording = async () => {
 
         const recording = new Audio.Recording();
         recordingRef.current = recording; // Store the recording instance
-        await recording.prepareToRecordAsync(
-          Audio.RECORDING_OPTIONS_PRESET_HIGH_QUALITY
-        );
+          await recording.prepareToRecordAsync({
+        android: {
+          extension: ".webm",
+          outputFormat: Audio.RECORDING_OPTION_ANDROID_OUTPUT_FORMAT_WEBM,
+          audioEncoder: Audio.RECORDING_OPTION_ANDROID_AUDIO_ENCODER_DEFAULT,
+          sampleRate: 16000,
+          numberOfChannels: 1, // Mono channel for speech
+          bitRate: 256000,
+        },
+        ios: {
+          extension: ".webm",
+          audioQuality: Audio.RECORDING_OPTION_IOS_AUDIO_QUALITY_HIGH,
+          sampleRate: 16000,
+          numberOfChannels: 1, // Mono channel for speech
+          bitRate: 64000,
+        },
+      });
         await recording.startAsync();
         Speech.speak('Listening');
+        console.log('Listening');
 
         setTimeout(async () => {
           if (recordingRef.current) {
@@ -147,12 +164,11 @@ const startRecording = async () => {
             console.log('Recording stopped');
 
             const uri = recording.getURI();
-            const file = await fetch(uri);
-            const buffer = await file.arrayBuffer();
+          //  const file = await fetch(uri);
 
-            // Send the audio buffer to Deepgram API
-            const resultText = await sendToDeepgram(buffer);
-            console.log('Deepgram Response:', resultText);
+            // Send the audio buffer to Google Cloud API
+            const resultText = await transcribeAudio(uri);
+            console.log('Google Speech Response:', resultText);
 
             // Navigate based on the response
             if (resultText.toLowerCase().includes('open detection')|| resultText.toLowerCase().includes('detection')
@@ -163,7 +179,8 @@ const startRecording = async () => {
             } else if (resultText.toLowerCase().includes('open assistance') || resultText.toLowerCase().includes('assistance')
             || resultText.toLowerCase().includes('ai')) {
               router.push('/AI');
-            } else {
+            } 
+            else {
             startRecording();
             }
           }
@@ -173,20 +190,57 @@ const startRecording = async () => {
       }
     };
 
-    const sendToDeepgram = async (audioBuffer) => {
-      const apiKey = '7626411a142c24bc75218732a32fd089a8810ba6'; // Replace with your Deepgram API key
-      const response = await fetch('https://api.deepgram.com/v1/listen', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'audio/wav',
-          'Authorization': `Token ${apiKey}`,
-        },
-        body: audioBuffer,
+    const transcribeAudio = async (audioUri) => {
+
+      
+const GOOGLE_API_KEY_speech = "AIzaSyDSu1MQNfTaAeoSn5yaJFgs50IjjP84LXA";
+   
+    if (!audioUri) {
+      console.log('No Recording", "Please record an audio first.');
+      return;
+    }
+
+  
+
+    try {
+      // Read the audio file as base64
+      const audioBase64 = await FileSystem.readAsStringAsync(audioUri, {
+        encoding: FileSystem.EncodingType.Base64,
       });
 
-      const data = await response.json();
-      return data.results?.channels[0]?.alternatives[0]?.transcript || '';
-    };
+      // Google Cloud Speech-to-Text API request payload
+      const requestPayload = {
+        config: {
+          encoding: "WEBM_OPUS", // Encoding for WEBM audio format
+          sampleRateHertz: 16000, // Sample rate for the recording
+          languageCode: "en-Us",  // French language, change as needed
+        },
+        audio: {
+          content: audioBase64,
+        },
+      };
+
+      // API call
+      const response = await axios.post(
+        `https://speech.googleapis.com/v1/speech:recognize?key=${GOOGLE_API_KEY_speech}`,
+        requestPayload
+      );
+
+      // Extract text
+      const transcribedText = response.data.results
+        ? response.data.results.map((result) => result.alternatives[0].transcript).join("\n")
+        : "No transcription available.";
+
+        console.log('Transcribed Text : '+transcribedText);
+      return transcribedText;
+    } catch (error) {
+      console.log("Error converting audio to text:", error);
+      return;
+      
+    } 
+    
+  };
+
   
 
 
