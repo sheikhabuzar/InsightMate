@@ -14,10 +14,14 @@ import axios from 'axios';
 import ObjectDetectionScreen from "./objectmap";
 
 
-
 /////////
 
 const GoogleMap = () => {
+  
+  
+const GOOGLE_API_KEY_speech = "AIzaSyDSu1MQNfTaAeoSn5yaJFgs50IjjP84LXA";
+  
+const GOOGLE_API_KEY = "AIzaSyBxCwHntkDBpBr_ZLIU4nBh4Ywi4rEUW58";
   const [currentLocation1, setCurrentLocation] = useState(null);
   const [region, setRegion] = useState(null);
   const [destination1, setDestination] = useState("");
@@ -30,13 +34,12 @@ const GoogleMap = () => {
   const [showCamera, setShowCamera] = useState(false);
 const [directionsLoaded, setDirectionsLoaded] = useState(false);
 const [isDirectionsLoaded, setIsDirectionsLoaded] = useState(false);
-const [mapHeight, setMapHeight] = useState('80%');
-  const GOOGLE_API_KEY = "AIzaSyBxCwHntkDBpBr_ZLIU4nBh4Ywi4rEUW58"; // Replace with your actual API key
-  const revAccessToken = "02SVTgaqr-HbZO9N3-hPglv4aItscINrmNC98UyMT2ZjWsm17knqL_YtqjqVrAKs-fwEg-KDrNsEGfSkykvCKesxZQBlw"; //////////////
+const [mapHeight, setMapHeight] = useState('80%'); // Replace with your actual API key //////////////
   let destination="";
   let currentLocation="";
   const recordingRef = useRef(null);
   const router = useRouter();
+    const fileUri = `${FileSystem.documentDirectory}locations.txt`;
   
   
   
@@ -47,7 +50,7 @@ const [mapHeight, setMapHeight] = useState('80%');
       onDone: ()=>
         {
         initializeMap();
-        startRecording();
+       startRecording();
       }
     });
     
@@ -78,6 +81,155 @@ const [mapHeight, setMapHeight] = useState('80%');
   await fetchLocation();
     
   };
+
+
+  const SavedLocationRead = async () => {
+    
+    await readLocations(); // Speak locations stored in the file
+
+    // Start recording after reading locations
+    setTimeout(() => startRecordingForSavedLocations(), 2000);
+  };
+
+  const wordToNumber = (word) => {
+  const mapping = {
+    one: 1,
+    two: 2,
+    three: 3,
+    four: 4,
+    five: 5,
+    six: 6,
+    seven: 7,
+    eight: 8,
+    nine: 9,
+    ten: 10,
+    eleven: 11,
+    twelve: 12
+    // Add more words as needed
+  };
+
+  return mapping[word.toLowerCase()] || null; // Return null if the word isn't found
+};
+
+
+  const readLocations = async () => {
+    try {
+      const data = await FileSystem.readAsStringAsync(fileUri).catch(() => "");
+      if (!data) {
+        Alert.alert("No Data", "No locations found to read!");
+        return;
+      }
+
+      const locations = data.split("\n").filter((loc) => loc.trim());
+      for (let i = 0; i < locations.length; i++) {
+        const loc = locations[i];
+        Speech.speak(`Say ${i + 11} for ${loc}`, {
+          pitch: 1.0,
+          rate: 1.0,
+        });
+        // Add delay to ensure speech for each location is completed
+        await new Promise((resolve) => setTimeout(resolve, 3000));
+      }
+    } catch (error) {
+      Alert.alert("Error", "Failed to read locations.");
+      console.error("Error reading locations:", error);
+    }
+  };
+
+  const startRecordingForSavedLocations = async () => {
+    try {
+      if (recordingRef.current) {
+          try {
+            if (recordingRef.current.getStatusAsync) {
+              const status = await recordingRef.current.getStatusAsync();
+              if (status.isRecording) {
+                await recordingRef.current.stopAndUnloadAsync();
+              }
+            }
+            recordingRef.current = null; // Clear the reference after stopping
+          } catch (error) {
+            console.error("Error while stopping/unloading recording:", error);
+          }
+        }
+      const { granted } = await Audio.requestPermissionsAsync();
+      if (!granted) {
+        Speech.speak("Permission Denied. Microphone access is required.");
+        return;
+      }
+      
+      await Audio.setAudioModeAsync({
+        allowsRecordingIOS: true,
+        playsInSilentModeIOS: true,
+      });
+      
+      const recording = new Audio.Recording();
+      recordingRef.current = recording;
+      await recording.prepareToRecordAsync({
+        android: {
+          extension: ".webm",
+          outputFormat: Audio.RECORDING_OPTION_ANDROID_OUTPUT_FORMAT_WEBM,
+          audioEncoder: Audio.RECORDING_OPTION_ANDROID_AUDIO_ENCODER_DEFAULT,
+          sampleRate: 16000,
+          numberOfChannels: 1, // Mono channel for speech
+          bitRate: 256000,
+        },
+        ios: {
+          extension: ".webm",
+          audioQuality: Audio.RECORDING_OPTION_IOS_AUDIO_QUALITY_HIGH,
+          sampleRate: 16000,
+          numberOfChannels: 1, // Mono channel for speech
+          bitRate: 64000,
+        },
+      });
+      await recording.startAsync();
+      console.log("Recording started");
+      console.log("Listening ");
+
+      setTimeout(async () => {
+        await recording.stopAndUnloadAsync();
+        const uri = recording.getURI();
+
+        const transcript = await transcribeAudio(uri);
+
+        Speech.speak(`You said: ${transcript}`, {
+          onDone: () => processTranscript(transcript),
+        });
+      }, 5000); // Record for 5 seconds
+    } catch (error) {
+      console.error("Error during recording:", error);
+      Alert.alert("Error", "An error occurred while recording.");
+    }
+  };
+  
+
+  const processTranscript = (transcript) => {
+ //   transcript=wordToNumber(transcript);
+ //   console.log(transcript);
+  //  const chosenLocationIndex = parseInt(transcript, 10); //////////////////////////////////////////
+  const chosenLocationIndex=transcript-10;
+  
+      console.log('Chosen Location Index : '+chosenLocationIndex);
+    if (isNaN(chosenLocationIndex)) {
+      console.log(chosenLocationIndex);
+      console.log("Invalid Input", "Please say a valid number for a location.");
+      SavedLocationRead();
+      return;
+    }
+
+    FileSystem.readAsStringAsync(fileUri).then((data) => {
+      const locations = data.split("\n").filter((loc) => loc.trim());
+      if (chosenLocationIndex > 0 && chosenLocationIndex <= locations.length) {
+        const selectedLocation = locations[chosenLocationIndex];
+        destination=selectedLocation;
+        getDirections();
+      } else {
+        console.log("Invalid Choice", "The number does not match any location.");
+        SavedLocationRead();
+        return;
+      }
+    });
+  };
+
   
   // Recording function for Destination
   const startRecording = async () => {
@@ -110,19 +262,22 @@ const [mapHeight, setMapHeight] = useState('80%');
       
       const recording = new Audio.Recording();
       recordingRef.current = recording;
-      
+    
       await recording.prepareToRecordAsync({
         android: {
-          extension: ".mp3",
-          outputFormat: Audio.RECORDING_OPTION_ANDROID_OUTPUT_FORMAT_MPEG_4,
-          audioEncoder: Audio.RECORDING_OPTION_ANDROID_AUDIO_ENCODER_AAC,
+          extension: ".webm",
+          outputFormat: Audio.RECORDING_OPTION_ANDROID_OUTPUT_FORMAT_WEBM,
+          audioEncoder: Audio.RECORDING_OPTION_ANDROID_AUDIO_ENCODER_DEFAULT,
+          sampleRate: 16000,
+          numberOfChannels: 1, // Mono channel for speech
+          bitRate: 256000,
         },
         ios: {
-          extension: ".mp3",
+          extension: ".webm",
           audioQuality: Audio.RECORDING_OPTION_IOS_AUDIO_QUALITY_HIGH,
-          sampleRate: 44100,
-          numberOfChannels: 2,
-          bitRate: 128000,
+          sampleRate: 16000,
+          numberOfChannels: 1, // Mono channel for speech
+          bitRate: 64000,
         },
       });
       
@@ -137,9 +292,6 @@ const [mapHeight, setMapHeight] = useState('80%');
         await recording.stopAndUnloadAsync();
         const uri = recording.getURI();
         console.log('Recording stopped Of Destination');
-        
-        
-        
         
         const transcript = await transcribeAudio(uri);
         
@@ -161,6 +313,12 @@ const [mapHeight, setMapHeight] = useState('80%');
           console.log('Navigating to Home Screen');
           
           handleBackButton();
+          return;
+        }
+        if (homechk.trim().toLowerCase().includes("saved locations") || homechk.trim().toLowerCase().includes("saved location")
+        || homechk.trim().toLowerCase().includes("save locations") || homechk.trim().toLowerCase().includes("save location")) {
+          
+          SavedLocationRead();
           return;
         }
         
@@ -226,19 +384,22 @@ const [mapHeight, setMapHeight] = useState('80%');
         recordingRef.current = recording;
         
         await recording.prepareToRecordAsync({
-          android: {
-            extension: ".mp3",
-            outputFormat: Audio.RECORDING_OPTION_ANDROID_OUTPUT_FORMAT_MPEG_4,
-            audioEncoder: Audio.RECORDING_OPTION_ANDROID_AUDIO_ENCODER_AAC,
-          },
-          ios: {
-            extension: ".mp3",
-            audioQuality: Audio.RECORDING_OPTION_IOS_AUDIO_QUALITY_HIGH,
-            sampleRate: 44100,
-            numberOfChannels: 2,
-            bitRate: 128000,
-          },
-        });
+        android: {
+          extension: ".webm",
+          outputFormat: Audio.RECORDING_OPTION_ANDROID_OUTPUT_FORMAT_WEBM,
+          audioEncoder: Audio.RECORDING_OPTION_ANDROID_AUDIO_ENCODER_DEFAULT,
+          sampleRate: 16000,
+          numberOfChannels: 1, // Mono channel for speech
+          bitRate: 256000,
+        },
+        ios: {
+          extension: ".webm",
+          audioQuality: Audio.RECORDING_OPTION_IOS_AUDIO_QUALITY_HIGH,
+          sampleRate: 16000,
+          numberOfChannels: 1, // Mono channel for speech
+          bitRate: 64000,
+        },
+      });
         
         await recording.startAsync();
         Speech.speak("Listening");
@@ -314,86 +475,51 @@ const [mapHeight, setMapHeight] = useState('80%');
   };
   
   
-  const transcribeAudio = async (uri) => {
-    try {
-      const fileInfo = await FileSystem.getInfoAsync(uri);
-      if (fileInfo.size <= 0) {
-        throw new Error('Recorded file is empty.');
-      }
-      
-      // Upload the audio file to Rev.ai
-      const formData = new FormData();
-      formData.append('media', {
-        uri: fileInfo.uri,
-        name: 'audio.mp3', // Ensure the name matches the file format
-        type: 'audio/mp3', // MIME type for MP3
-      });
-      
-      const uploadResponse = await axios.post(
-        'https://api.rev.ai/speechtotext/v1/jobs',
-        formData,
-        {
-          headers: {
-            Authorization: `Bearer ${revAccessToken}`,
-            'Content-Type': 'multipart/form-data',
-          },
-        }
-      );
-      
-      const jobId = uploadResponse.data.id;
-      console.log('Job ID:', jobId);
-      
-      // Poll for the transcription result
-      let transcriptionResult = '';
-      while (true) {
-        const statusResponse = await axios.get(
-        `https://api.rev.ai/speechtotext/v1/jobs/${jobId}`,
-          {
-            headers: {
-              Authorization: `Bearer ${revAccessToken}`,
-              Accept: 'application/vnd.rev.transcript.v1.0+json',
-            },
-          }
-        );
-        
-        console.log('Job Status:'+ statusResponse.data.status);
-        
-        if (statusResponse.data.status === 'transcribed') {
-          const transcriptResponse = await axios.get(
-          `https://api.rev.ai/speechtotext/v1/jobs/${jobId}/transcript`,
-            {
-              headers: {
-                Authorization: `Bearer ${revAccessToken}`,
-                Accept: 'application/vnd.rev.transcript.v1.0+json',
-              },
-            }
-          );
-          
-          console.log('Transcript Response:', transcriptResponse.data);
-          
-          // Combine text elements into a full transcription
-          transcriptionResult = transcriptResponse.data.monologues[0].elements
-          .map((element) => element.value)
-          .join(' ');
-          break;
-        } else if (statusResponse.data.status === 'failed') {
-          throw new Error('Transcription failed.');
-        } else if (statusResponse.data.status === 'in_progress') {
-          // Wait 5 seconds before checking again
-          await new Promise((resolve) => setTimeout(resolve, 5000));
-        } else {
-          console.log('Unknown Status:', statusResponse.data.status);
-          throw new Error(`Unexpected job status: ${statusResponse.data.status}`);
-        }
-      }
-      
-      return transcriptionResult;
-    } catch (error) {
-      console.error('Error transcribing audio:', error);
-      // throw error;
-      startRecording();
-      return; 
+  const transcribeAudio = async (audioUri) => {
+   
+    if (!audioUri) {
+      console.log('No Recording", "Please record an audio first.');
+      return;
     }
+
+  
+
+    try {
+      // Read the audio file as base64
+      const audioBase64 = await FileSystem.readAsStringAsync(audioUri, {
+        encoding: FileSystem.EncodingType.Base64,
+      });
+
+      // Google Cloud Speech-to-Text API request payload
+      const requestPayload = {
+        config: {
+          encoding: "WEBM_OPUS", // Encoding for WEBM audio format
+          sampleRateHertz: 16000, // Sample rate for the recording
+          languageCode: "en-Us",  // French language, change as needed
+        },
+        audio: {
+          content: audioBase64,
+        },
+      };
+
+      // API call
+      const response = await axios.post(
+        `https://speech.googleapis.com/v1/speech:recognize?key=${GOOGLE_API_KEY_speech}`,
+        requestPayload
+      );
+
+      // Extract text
+      const transcribedText = response.data.results
+        ? response.data.results.map((result) => result.alternatives[0].transcript).join("\n")
+        : "No transcription available.";
+
+        console.log('Transcribed Text : '+transcribedText);
+      return transcribedText;
+    } catch (error) {
+      console.log("Error converting audio to text:", error);
+      return;
+      
+    } 
     
   };
 
@@ -416,6 +542,7 @@ const [mapHeight, setMapHeight] = useState('80%');
     
     // setCurrentLocation(userLocation);
     currentLocation=userLocation; //////////////////////////////////////////////////////////////
+    console.log('User Current Location : '+currentLocation);
     setRegion(userLocation);
     
     const addressResult = await LocationGeocoding.reverseGeocodeAsync({
@@ -431,6 +558,11 @@ const [mapHeight, setMapHeight] = useState('80%');
   };
   
   const getDirections = async () => {
+
+    if(destination1)
+    {
+      destination=destination1;
+    }
     console.log(destination);
     if (!destination) {
       Alert.alert("Error", "Please enter a destination.");
@@ -458,7 +590,7 @@ const [mapHeight, setMapHeight] = useState('80%');
   
       const response = await fetch(directionsUrl);
       const data = await response.json();
-      console.log("2 : " + data.routes.length);
+      console.log("2 : " + data.routes.length); //////////////////////////////////////////////////////////////////////////
       if (data.routes.length > 0) {
         const route = data.routes[0].overview_polyline.points;
         const decodedRoute = decodePolyline(route);
