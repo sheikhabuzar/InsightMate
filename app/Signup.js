@@ -8,12 +8,6 @@ const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/;
 // Regex for phone number validation (11 digits)
 const phoneNumberRegex = /^[0-9]{11}$/;
 
-// Function to validate password strength
-const isPasswordStrong = (password) => {
-  const strongPasswordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
-  return strongPasswordRegex.test(password);
-};
-
 const Signup = () => {
   const router = useRouter();
   
@@ -33,8 +27,8 @@ const Signup = () => {
       return;
     }
 
-    if (!password || !isPasswordStrong(password)) {
-      Alert.alert('Weak Password', 'Password must be at least 8 characters long, contain both uppercase and lowercase letters, a number, and a special character');
+    if (!password || password.length < 6) {
+      Alert.alert('Weak Password', 'Password must be at least 6 characters long');
       return;
     }
 
@@ -47,17 +41,19 @@ const Signup = () => {
       await AsyncStorage.setItem('userPhoneNumber', phoneNumber);
       await AsyncStorage.setItem('userEmail', email);
       await AsyncStorage.setItem('userPassword', password);
+
+      Alert.alert('Success', 'Account created successfully!');
+      router.push('/Login');
     } catch (error) {
       Alert.alert('Error', 'Something went wrong while saving your data.');
     }
-
-    router.push('/Login');
   };
 
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Create an Account</Text>
 
+      {/* Phone Number Input */}
       <TextInput
         style={styles.input}
         placeholder="Phone Number"
@@ -67,6 +63,7 @@ const Signup = () => {
         onChangeText={setPhoneNumber}
       />
 
+      {/* Email Input */}
       <TextInput
         style={styles.input}
         placeholder="Email"
@@ -76,6 +73,7 @@ const Signup = () => {
         onChangeText={setEmail}
       />
 
+      {/* Password Input */}
       <TextInput
         style={styles.input}
         placeholder="Password"
@@ -85,6 +83,7 @@ const Signup = () => {
         onChangeText={setPassword}
       />
 
+      {/* Confirm Password Input */}
       <TextInput
         style={styles.input}
         placeholder="Confirm Password"
@@ -94,6 +93,7 @@ const Signup = () => {
         onChangeText={setConfirmPassword}
       />
 
+      {/* Sign Up Button */}
       <TouchableOpacity style={styles.signupButton} onPress={handleSignup}>
         <Text style={styles.signupButtonText}>Sign Up</Text>
       </TouchableOpacity>
