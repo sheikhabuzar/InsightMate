@@ -5,12 +5,12 @@ import { WebView } from 'react-native-webview';
 const App = () => {
   return (
     <SafeAreaView style={styles.container}>
-      {/* Top Bar */}
+      
       <View style={styles.topBar}>
         <Text style={styles.topBarText}>Voice Assistant</Text>
       </View>
 
-      {/* WebView */}
+      
       <WebView
         source={{ uri: 'https://deepgram.com/agent' }}
         style={styles.webView}
@@ -18,7 +18,7 @@ const App = () => {
         injectedJavaScript={`
           document.body.style.overflow = 'hidden'; // Hide scrollbars
           document.body.style.margin = '0'; // Remove default margin
-          document.body.style.clipPath = 'inset(20% 10% 20% 10%)'; // Clip top 20%, bottom 20%, left 10%, right 10%
+          document.body.style.clipPath = 'inset(20% 10% 28% 10%)'; // Clip top 20%, bottom 20%, left 10%, right 10%
           true; // Required to avoid a warning in WebView
         `}
       />
@@ -29,21 +29,22 @@ const App = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8f9fa', // Light background for SafeAreaView
+    backgroundColor: '#f8f9fa',
   },
   topBar: {
-    height: 60,
-    backgroundColor: '#ffff', // Blue color for the top bar
+    height: 70,
+    backgroundColor: '#000', 
     justifyContent: 'center',
     alignItems: 'center',
-    elevation: 4, // Shadow for Android
-    shadowColor: '#000', // Shadow for iOS
+    elevation: 4, 
+    shadowColor: '#000', 
     shadowOpacity: 0.2,
     shadowRadius: 5,
+
   },
   topBarText: {
-    color: '#000', // White text color
-    fontSize: 20,
+    color: '#fff', 
+    fontSize: 24,
     fontWeight: 'bold',
   },
   webView: {

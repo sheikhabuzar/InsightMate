@@ -118,7 +118,7 @@ const ObjectDetectionScreen = ({ navigation }) => {
   useEffect(() => {
     const intervalId = setInterval(() => {
       captureImage();
-    }, 7000);
+    }, 4000);
 
     return () => {
       clearInterval(intervalId);
