@@ -1,37 +1,30 @@
-
-
-//import { View, Text, StyleSheet } from "react-native";
-
-//export default function SavedLocations() {
-  //return (
-    //<View style={styles.container}>
-      //<Text style={styles.text}>👤 Location Screen</Text>
-    //</View>
-//  );
-//}
-
-//const styles = StyleSheet.create({
-  //container: {
-    //flex: 1,
-    //justifyContent: "center",
-    //alignItems: "center",
-    //backgroundColor: "#f5f5f5",
-  //},
-  //text: {
-   // fontSize: 18,
-    //fontWeight: "bold",
-    //color: "#333",
-  //},
-//});
-
-import React, { useState } from 'react';
-import { View, TextInput, Button, StyleSheet, Alert } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, TextInput, Button, StyleSheet, Alert, FlatList, Text, TouchableOpacity } from 'react-native';
 import * as FileSystem from 'expo-file-system';
 
-const LocationScreen = () => {
+import { MaterialIcons } from '@expo/vector-icons';
+
+const SavedLocations = () => {
   const [location, setLocation] = useState('');
+  const [locations, setLocations] = useState([]);
   const fileUri = `${FileSystem.documentDirectory}locations.txt`;
 
+  useEffect(() => {
+    loadLocations();
+  }, []);
+
+  // Load locations from file system
+  const loadLocations = async () => {
+    try {
+      const existingData = await FileSystem.readAsStringAsync(fileUri).catch(() => '');
+      const locationList = existingData ? existingData.split('\n') : [];
+      setLocations(locationList.filter((loc) => loc.trim() !== '')); // Remove empty lines
+    } catch (error) {
+      console.error('Error loading locations:', error);
+    }
+  };
+
+  // Store new location
   const storeLocation = async () => {
     if (!location.trim()) {
       Alert.alert('Validation', 'Please enter a location!');
@@ -39,16 +32,25 @@ const LocationScreen = () => {
     }
 
     try {
-      // Append the new location to the file
-      const existingData = await FileSystem.readAsStringAsync(fileUri).catch(() => '');
-      const updatedData = existingData ? `${existingData}\n${location}` : location;
+      const updatedData = [...locations, location].join('\n');
       await FileSystem.writeAsStringAsync(fileUri, updatedData);
-
-      Alert.alert('Success', 'Location stored successfully!');
       setLocation('');
+      loadLocations(); // Refresh the list
+      Alert.alert('Success', 'Location stored successfully!');
     } catch (error) {
       Alert.alert('Error', 'Failed to store location.');
       console.error('Error storing location:', error);
+    }
+  };
+
+  // Delete a specific location
+  const deleteLocation = async (item) => {
+    try {
+      const updatedList = locations.filter((loc) => loc !== item);
+      await FileSystem.writeAsStringAsync(fileUri, updatedList.join('\n'));
+      setLocations(updatedList);
+    } catch (error) {
+      console.error('Error deleting location:', error);
     }
   };
 
@@ -60,7 +62,21 @@ const LocationScreen = () => {
         value={location}
         onChangeText={setLocation}
       />
-      <Button title="Store" onPress={storeLocation} />
+      <Button title="Store Location" onPress={storeLocation} />
+
+      <FlatList
+        data={locations}
+        keyExtractor={(item, index) => index.toString()}
+        renderItem={({ item }) => (
+          <View style={styles.listItem}>
+            <Text style={styles.locationText}>{item}</Text>
+            <TouchableOpacity  onPress={() => deleteLocation(item)}>
+              <MaterialIcons name="delete" size={24} color="red" />
+             
+            </TouchableOpacity>
+          </View>
+        )}
+      />
     </View>
   );
 };
@@ -68,8 +84,6 @@ const LocationScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
     padding: 20,
     backgroundColor: '#fff',
   },
@@ -82,7 +96,26 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     marginBottom: 20,
   },
+  listItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#ccc',
+  },
+  locationText: {
+    fontSize: 16,
+  },
+  deleteButton: {
+    backgroundColor: 'red',
+    padding: 5,
+    borderRadius: 5,
+  },
+  deleteText: {
+    color: 'white',
+    fontWeight: 'bold',
+  },
 });
 
-export default LocationScreen;
-
+export default SavedLocations;
