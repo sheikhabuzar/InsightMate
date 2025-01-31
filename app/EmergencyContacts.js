@@ -4,6 +4,10 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons } from '@expo/vector-icons';
 import * as Speech from 'expo-speech';
 import uuid from 'react-native-uuid';
+import * as SMS from "expo-sms";
+
+
+
 
 const EmergencyContacts = () => {
   const [contacts, setContacts] = useState([]);
@@ -58,9 +62,18 @@ const EmergencyContacts = () => {
   };
 
   // Send SOS alert
-  const sendSOS = () => {
-    Alert.alert('🚨 SOS Sent!', 'Emergency contacts have been notified.');
-    Speech.speak('Emergency SOS sent. Contacts have been alerted.');
+  const sendSOS = () =>  {
+
+    const isAvailable =  SMS.isAvailableAsync();
+    if (!isAvailable) {
+      Alert.alert("Error", "SMS is not available on this device.");
+      return;
+    }
+
+     SMS.sendSMSAsync(
+      ["+923474984594"], 
+      "🚨 SOS! I need help. Please respond ASAP! 📍"
+    );
   };
 
   return (
