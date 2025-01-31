@@ -10,13 +10,19 @@ const phoneNumberRegex = /^[0-9]{11}$/;
 
 const Signup = () => {
   const router = useRouter();
-  
+
+  const [username, setUsername] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
 
   const handleSignup = async () => {
+    if (!username.trim()) {
+      Alert.alert('Invalid Username', 'Please enter a valid username');
+      return;
+    }
+
     if (!phoneNumber || !phoneNumberRegex.test(phoneNumber)) {
       Alert.alert('Invalid Phone Number', 'Please enter a valid 11-digit phone number');
       return;
@@ -38,9 +44,17 @@ const Signup = () => {
     }
 
     try {
-      await AsyncStorage.setItem('userPhoneNumber', phoneNumber);
-      await AsyncStorage.setItem('userEmail', email);
-      await AsyncStorage.setItem('userPassword', password);
+      // Save user profile as a complete object
+      const userProfile = {
+        username,
+        phone: phoneNumber,
+        email,
+        password,
+        address: '', // You can later update this if needed
+        imageUri: '', // Set the profile image URI later
+      };
+
+      await AsyncStorage.setItem('userProfile', JSON.stringify(userProfile));
 
       Alert.alert('Success', 'Account created successfully!');
       router.push('/Login');
@@ -52,6 +66,15 @@ const Signup = () => {
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Create an Account</Text>
+
+      {/* Username Input */}
+      <TextInput
+        style={styles.input}
+        placeholder="Username"
+        placeholderTextColor="#888"
+        value={username}
+        onChangeText={setUsername}
+      />
 
       {/* Phone Number Input */}
       <TextInput
