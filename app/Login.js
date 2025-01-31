@@ -3,10 +3,9 @@ import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image, Alert } fro
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-// Regular expression for validating email
+
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-// Regular expression for validating password (minimum 6 characters)
 const passwordRegex = /^.{6,}$/;
 
 const Login = () => {
@@ -41,23 +40,21 @@ const Login = () => {
       if (savedEmail === email && savedPassword === password) {
         console.log('Logged in successfully');
 
-        // Store login state
         await AsyncStorage.setItem('userLoggedIn', 'true');
         
-        // Save profile details including email
         const profileDetails = {
-          name: 'User Name',  // you can fetch these from your signup or other sources
-          address: 'User Address', // You can add address or other details here
-          email: email, // Save email as well
+          name: 'User Name',  
+          address: 'User Address', 
+          email: email,
         };
-        await AsyncStorage.setItem('userProfile', JSON.stringify(profileDetails)); // Save profile
+        await AsyncStorage.setItem('userProfile', JSON.stringify(profileDetails)); 
 
-        router.replace('/HomeScreen'); // Navigate to home screen
+        router.replace('/HomeScreen'); 
       } else {
         Alert.alert('Invalid Credentials', 'The email or password is incorrect.');
       }
     } catch (error) {
-      console.error('Error reading AsyncStorage', error);
+     // console.error('Error reading AsyncStorage', error);
       Alert.alert('Error', 'Something went wrong. Please try again later.');
     }
   };
@@ -66,7 +63,6 @@ const Login = () => {
     <View style={styles.container}>
       <Text style={styles.title}>Login</Text>
 
-      {/* Email input */}
       <TextInput
         style={styles.input}
         placeholder="Email"
@@ -76,7 +72,7 @@ const Login = () => {
         onChangeText={setEmail}
       />
 
-      {/* Password input with show/hide functionality */}
+      
       <View style={styles.inputContainer}>
         <TextInput
           style={styles.input}
@@ -94,14 +90,13 @@ const Login = () => {
             style={styles.eyeImage}
             source={
               isPasswordVisible
-                ? require('../assets/images/eye-open.png') // Import the "show password" icon
-                : require('../assets/images/eye-closed.png') // Import the "hide password" icon
+                ? require('../assets/images/eye-open.png') 
+                : require('../assets/images/eye-closed.png') 
             }
           />
         </TouchableOpacity>
       </View>
 
-      {/* Forget password button */}
       <TouchableOpacity
         style={styles.forgetPasswordButton}
         onPress={() => router.push('/ForgetPassword')}
@@ -109,12 +104,10 @@ const Login = () => {
         <Text style={styles.forgetPasswordText}>Forget Password?</Text>
       </TouchableOpacity>
 
-      {/* Login button */}
       <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
         <Text style={styles.loginButtonText}>Login</Text>
       </TouchableOpacity>
 
-      {/* Sign up link */}
       <View style={styles.signupContainer}>
         <Text style={styles.signupText}>New on the app? </Text>
         <TouchableOpacity onPress={() => router.push('/Signup')}>
@@ -148,7 +141,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 15,
     fontSize: 16,
     backgroundColor: '#fff',
-    marginBottom: 15, // Adds spacing between inputs
+    marginBottom: 15, 
   },
   inputContainer: {
     width: '100%',

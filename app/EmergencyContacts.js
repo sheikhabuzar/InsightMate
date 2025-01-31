@@ -4,6 +4,10 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons } from '@expo/vector-icons';
 import * as Speech from 'expo-speech';
 import uuid from 'react-native-uuid';
+import * as SMS from "expo-sms";
+
+
+
 
 const EmergencyContacts = () => {
   const [contacts, setContacts] = useState([]);
@@ -11,7 +15,7 @@ const EmergencyContacts = () => {
   const [relation, setRelation] = useState('');
   const [phone, setPhone] = useState('');
 
-  // Load contacts from AsyncStorage when the app starts
+
   useEffect(() => {
     const loadContacts = async () => {
       try {
@@ -26,7 +30,7 @@ const EmergencyContacts = () => {
     loadContacts();
   }, []);
 
-  // Save contacts to AsyncStorage
+ 
   const saveContacts = async (updatedContacts) => {
     try {
       await AsyncStorage.setItem('emergencyContacts', JSON.stringify(updatedContacts));
@@ -36,7 +40,7 @@ const EmergencyContacts = () => {
     }
   };
 
-  // Add a new emergency contact
+ 
   const addContact = () => {
     if (!relation || !phone) {
       Alert.alert('Error', 'Please enter both relation and phone number');
@@ -51,16 +55,25 @@ const EmergencyContacts = () => {
     setModalVisible(false);
   };
 
-  // Call a contact
+ 
   const callContact = (phone) => {
     Linking.openURL(`tel:${phone}`);
     Speech.speak(`Calling ${phone}`);
   };
 
-  // Send SOS alert
-  const sendSOS = () => {
-    Alert.alert('🚨 SOS Sent!', 'Emergency contacts have been notified.');
-    Speech.speak('Emergency SOS sent. Contacts have been alerted.');
+ 
+  const sendSOS = () =>  {
+
+    const isAvailable =  SMS.isAvailableAsync();
+    if (!isAvailable) {
+      Alert.alert("Error", "SMS is not available on this device.");
+      return;
+    }
+
+     SMS.sendSMSAsync(
+      ["+923474984594"], 
+      "🚨 SOS! I need help. Please respond ASAP! 📍"
+    );
   };
 
   return (
@@ -81,17 +94,17 @@ const EmergencyContacts = () => {
         )}
       />
 
-      {/* Add Contact Button */}
+     
       <TouchableOpacity style={styles.addButton} onPress={() => setModalVisible(true)}>
         <Text style={styles.addButtonText}>➕ Add Emergency Contact</Text>
       </TouchableOpacity>
 
-      {/* SOS Button */}
+     
       <TouchableOpacity style={styles.sosButton} onPress={sendSOS}>
         <Text style={styles.sosText}>🚨 SOS Alert</Text>
       </TouchableOpacity>
 
-      {/* Modal for Adding Contact */}
+     
       <Modal visible={modalVisible} animationType="slide" transparent>
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>

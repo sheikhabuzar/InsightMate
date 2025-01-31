@@ -156,7 +156,9 @@ const startRecording = async () => {
         },
       });
         await recording.startAsync();
+
         //Speech.speak('Listening');
+
         console.log('Listening');
 
         setTimeout(async () => {
@@ -178,7 +180,9 @@ const startRecording = async () => {
             } else if (resultText.toLowerCase().includes('open map') || resultText.toLowerCase().includes('map')) {
               router.push('/MapScreen');
             } else if (resultText.toLowerCase().includes('open assistance') || resultText.toLowerCase().includes('assistance')
+
             || resultText.toLowerCase().includes('ai assistant')) {
+
               router.push('/AI');
             } 
             else if (resultText.toLowerCase().includes('currency') || resultText.toLowerCase().includes('currency detection')
