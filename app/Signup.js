@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, Image } from 'react-native';
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -16,6 +16,8 @@ const Signup = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [passwordVisible, setPasswordVisible] = useState(false);
+  const [confirmPasswordVisible, setConfirmPasswordVisible] = useState(false);
 
   const handleSignup = async () => {
     if (!username.trim()) {
@@ -97,24 +99,48 @@ const Signup = () => {
       />
 
       {/* Password Input */}
-      <TextInput
-        style={styles.input}
-        placeholder="Password"
-        secureTextEntry={true}
-        placeholderTextColor="#888"
-        value={password}
-        onChangeText={setPassword}
-      />
+      <View style={styles.passwordContainer}>
+        <TextInput
+          style={styles.input}
+          placeholder="Password"
+          secureTextEntry={!passwordVisible}
+          placeholderTextColor="#888"
+          value={password}
+          onChangeText={setPassword}
+        />
+        <TouchableOpacity onPress={() => setPasswordVisible(!passwordVisible)}>
+          <Image
+            source={
+              passwordVisible
+                ? require('../assets/images/eye-open.png')
+                : require('../assets/images/eye-closed.png')
+            }
+            style={styles.eyeIcon}
+          />
+        </TouchableOpacity>
+      </View>
 
       {/* Confirm Password Input */}
-      <TextInput
-        style={styles.input}
-        placeholder="Confirm Password"
-        secureTextEntry={true}
-        placeholderTextColor="#888"
-        value={confirmPassword}
-        onChangeText={setConfirmPassword}
-      />
+      <View style={styles.passwordContainer}>
+        <TextInput
+          style={styles.input}
+          placeholder="Confirm Password"
+          secureTextEntry={!confirmPasswordVisible}
+          placeholderTextColor="#888"
+          value={confirmPassword}
+          onChangeText={setConfirmPassword}
+        />
+        <TouchableOpacity onPress={() => setConfirmPasswordVisible(!confirmPasswordVisible)}>
+          <Image
+            source={
+              confirmPasswordVisible
+                ? require('../assets/images/eye-open.png')
+                : require('../assets/images/eye-closed.png')
+            }
+            style={styles.eyeIcon}
+          />
+        </TouchableOpacity>
+      </View>
 
       {/* Sign Up Button */}
       <TouchableOpacity style={styles.signupButton} onPress={handleSignup}>
@@ -148,6 +174,17 @@ const styles = StyleSheet.create({
     fontSize: 16,
     backgroundColor: '#fff',
     marginBottom: 15,
+  },
+  passwordContainer: {
+    width: '100%',
+    position: 'relative',
+  },
+  eyeIcon: {
+    position: 'absolute',
+    right: 15,
+    top: 12,
+    width: 20,
+    height: 20,
   },
   signupButton: {
     width: '100%',

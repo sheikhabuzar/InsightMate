@@ -94,8 +94,8 @@ const Login = () => {
             style={styles.eyeImage}
             source={
               isPasswordVisible
-                ? require('../assets/images/eye-open.png') // Import the "show password" icon
-                : require('../assets/images/eye-closed.png') // Import the "hide password" icon
+                ? require('../assets/images/eye-open.png') // "show password" icon
+                : require('../assets/images/eye-closed.png') // "hide password" icon
             }
           />
         </TouchableOpacity>
