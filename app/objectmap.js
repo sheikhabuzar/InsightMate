@@ -56,13 +56,12 @@ const ObjectDetectionScreen = ({ navigation }) => {
 
       const apiResponse = await axios.post(apiURL, requestData);
 
-      // Handle FACE_DETECTION results
       const faceAnnotations = apiResponse.data.responses[0]?.faceAnnotations || [];
       if (faceAnnotations.length > 0) {
         Speech.speak('Person detected');
-        setLabels([{ description: 'Person face detected' }]); // Update UI with the face label
+        setLabels([{ description: 'Person face detected' }]);
       } else {
-        // Handle LABEL_DETECTION results
+       
         const allLabels = apiResponse.data.responses[0]?.labelAnnotations || [];
         const sortedLabels = allLabels
           .sort((a, b) => b.score - a.score)
@@ -71,15 +70,13 @@ const ObjectDetectionScreen = ({ navigation }) => {
         if (sortedLabels.length > 0) {
           setLabels(sortedLabels);
 
-          // Check if "person" is in the detected labels
           const labelNames = sortedLabels.map((label) => label.description);
           const sentenceParts = [];
 
-          // Add remaining labels Detected 
           sentenceParts.push(` ${labelNames.join(' or ')}.`);
           Speech.speak(sentenceParts.join('. '));
           Speech.speak('Detected');
-          // Track repeated labels
+       
           if (
             previousLabels.current.length > 0 &&
             JSON.stringify(previousLabels.current) === JSON.stringify(sortedLabels)
@@ -102,13 +99,11 @@ const ObjectDetectionScreen = ({ navigation }) => {
     }
   };
 
-  // Handle messages sent from the WebView
   const handleMessage = (event) => {
     const base64ImageData = event.nativeEvent.data;
     analyzeImage(base64ImageData);
   };
 
-  // Capture images every 7 seconds
   useEffect(() => {
     const intervalId = setInterval(() => {
       captureImage();

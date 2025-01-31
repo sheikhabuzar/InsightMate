@@ -4,7 +4,7 @@ import { useRoute, useNavigation } from '@react-navigation/native';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as FileSystem from 'expo-file-system';
-import * as Speech from 'expo-speech'; // Import Expo Speech API
+import * as Speech from 'expo-speech'; 
 
 const FACE_PLUS_PLUS_API_KEY = 'skORRCbttJto6nu5BT5mIypHjfnBBzP7';
 const FACE_PLUS_PLUS_API_SECRET = 'ifmXqLDxdHFP07Eew6-GqesxbT7X-qSr';
@@ -12,13 +12,13 @@ const FACE_PLUS_PLUS_API_SECRET = 'ifmXqLDxdHFP07Eew6-GqesxbT7X-qSr';
 const CompareFaces = () => {
   const [matchedMember, setMatchedMember] = useState(null);
   const [showMatchDetails, setShowMatchDetails] = useState(false);
-  const route = useRoute(); // Get the passed parameters
-  const navigation = useNavigation(); // For navigating back
-  const { detectedImage } = route.params; // This is the base64 image passed
+  const route = useRoute(); 
+  const navigation = useNavigation(); 
+  const { detectedImage } = route.params; 
 
   useEffect(() => {
     if (detectedImage) {
-      compareWithSavedImages(detectedImage); // Compare the received image
+      compareWithSavedImages(detectedImage); 
     }
   }, [detectedImage]);
 
@@ -26,41 +26,41 @@ const CompareFaces = () => {
     try {
       const storedData = await AsyncStorage.getItem('familyMembers');
       if (!storedData) {
-        Alert.alert('No data', 'No saved images found');
+       // Alert.alert('No data', 'No saved images found');
         return;
       }
 
       const familyMembers = JSON.parse(storedData);
       const detectedImageFileUri = await saveBase64ImageToFile(imageUri);
 
-      let isMatchFound = false; // Flag to track if a match is found
+      let isMatchFound = false; 
 
       for (let member of familyMembers) {
         if (member.image) {
           const match = await compareFaces(detectedImageFileUri, member.image);
           if (match) {
             setMatchedMember(member);
-            setShowMatchDetails(true); // Show the matched member details
-            speakDetectedPerson(member.relation, member.name); // Announce via speech
+            setShowMatchDetails(true); 
+            speakDetectedPerson(member.relation, member.name); 
             setTimeout(() => {
-              navigation.goBack(); // Go back to the previous screen after 7 seconds
-            }, 7000); // 7-second delay
-            isMatchFound = true; // Set flag to true if match is found
-            break; // Exit the loop once a match is found
+              navigation.goBack(); 
+            }, 5000); 
+            isMatchFound = true; 
+            break; 
           }
         }
       }
 
       if (!isMatchFound) {
-        speakNoMatchFound(); // Announce no match found via speech
-        Alert.alert('No Match', 'No matching faces found');
+        speakNoMatchFound(); 
+       // Alert.alert('No Match', 'No matching faces found');
         setTimeout(() => {
-          navigation.goBack(); // Go back to the previous screen (object detection screen)
-        }, 3000); // 3-second delay
+          navigation.goBack(); 
+        }, 3000); 
       }
     } catch (error) {
       console.error(error);
-      Alert.alert('Error', 'Failed to compare images');
+     // Alert.alert('Error', 'Failed to compare images');
     }
   };
 
@@ -72,7 +72,7 @@ const CompareFaces = () => {
       });
       return fileUri;
     } catch (error) {
-      console.error('Error saving base64 image to file:', error);
+      //console.error('Error saving base64 image to file:', error);
       return null;
     }
   };
@@ -101,7 +101,7 @@ const CompareFaces = () => {
         }
       );
 
-      return response.data.confidence > 75; // Adjust threshold as needed
+      return response.data.confidence > 75; 
     } catch (error) {
       console.error(error);
       return false;
@@ -118,7 +118,7 @@ const CompareFaces = () => {
   };
 
   const speakNoMatchFound = () => {
-    const message = 'No matching person detected.';
+    const message = 'Unknown person detected';
     Speech.speak(message, {
       language: 'en',
       pitch: 1,
@@ -128,12 +128,12 @@ const CompareFaces = () => {
 
   return (
     <View style={styles.container}>
-      {/* Header */}
+      
       <Text style={styles.header}>Face Recognition</Text>
 
       {showMatchDetails && matchedMember && (
         <View style={styles.matchDetailsContainer}>
-          {/* Display images horizontally */}
+        
           <View style={styles.imageContainer}>
             <View style={styles.imageWrapper}>
               <Text>Detected Image:</Text>
@@ -151,7 +151,7 @@ const CompareFaces = () => {
             </View>
           </View>
 
-          {/* Display member details */}
+         
           <Text style={styles.detailsText}>Name: {matchedMember.name}</Text>
           <Text style={styles.detailsText}>Relation: {matchedMember.relation}</Text>
           <Text style={styles.detailsText}>Phone Number: {matchedMember.phone}</Text>

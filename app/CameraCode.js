@@ -8,12 +8,12 @@ const CameraWebView = () => {
      
       <WebView
       source={{ uri: 'https://ShafqatWarraich.github.io/webcamera/web_cam.html' }}
-      javaScriptEnabled={true}  // Enable JavaScript
-      domStorageEnabled={true}  // Enable DOM storage
-      mediaPlaybackRequiresUserAction={false}  // Allow media playback without user action
-      allowsInlineMediaPlayback={true}  // Enable inline media playback
-      startInLoadingState={true}  // Show a loading indicator
-      onError={(error) => console.log(error)}  // Error handling
+      javaScriptEnabled={true}  
+      domStorageEnabled={true}  
+      mediaPlaybackRequiresUserAction={false}  
+      allowsInlineMediaPlayback={true}  
+      startInLoadingState={true}  
+      onError={(error) => console.log(error)} 
     /> 
 
     </View>

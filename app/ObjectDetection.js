@@ -30,58 +30,56 @@ const ObjectDetectionScreen = ({ navigation }) => {
       `);
     }
   };
-  
 
-  // Analyze the captured image using Google Vision API
+
   const analyzeImage = async (base64ImageData) => {
     try {
       const apiKey = 'AIzaSyCaREgPQjYUsrzG9HR37FK63RhS6hy5SSw';
       const apiURL = `https://vision.googleapis.com/v1/images:annotate?key=${apiKey}`;
-  
+
       const requestData = {
         requests: [
           {
             image: { content: base64ImageData },
             features: [
-              { type: 'LABEL_DETECTION', maxResults: 10 }, // Detect labels (objects, etc.)
-              { type: 'FACE_DETECTION', maxResults: 5 },  // Detect faces
+              { type: 'LABEL_DETECTION', maxResults: 10 },
+              { type: 'FACE_DETECTION', maxResults: 5 },
             ],
           },
         ],
       };
-  
+
       const apiResponse = await axios.post(apiURL, requestData);
-  
-      // Handle FACE_DETECTION results
+
+
       const faceAnnotations = apiResponse.data.responses[0]?.faceAnnotations || [];
       if (faceAnnotations.length > 0) {
-        Speech.speak('Person detected');
-        setLabels([{ description: 'Person face detected' }]); // Update UI with the face label
-  
-        // Navigate to CompareFaces screen and pass the detected image
+        //  Speech.speak('Person detected');
+        setLabels([{ description: 'Person face detected' }]);
+
         router.push({
           pathname: '/Facecompare',
-          params: { detectedImage: base64ImageData },  // Pass the image for comparison
+          params: { detectedImage: base64ImageData },
         });
       } else {
-        // Handle LABEL_DETECTION results
+
         const allLabels = apiResponse.data.responses[0]?.labelAnnotations || [];
         const sortedLabels = allLabels
           .sort((a, b) => b.score - a.score)
           .slice(0, 2);
-  
+
         if (sortedLabels.length > 0) {
           setLabels(sortedLabels);
-  
-          // Check if "person" is in the detected labels
+
+
           const labelNames = sortedLabels.map((label) => label.description);
           const sentenceParts = [];
-  
-          // Add remaining labels
+
+
           sentenceParts.push(`Detected objects are ${labelNames.join(' or ')}.`);
           Speech.speak(sentenceParts.join('. '));
-  
-          // Track repeated labels
+
+
           if (
             previousLabels.current.length > 0 &&
             JSON.stringify(previousLabels.current) === JSON.stringify(sortedLabels)
@@ -90,13 +88,13 @@ const ObjectDetectionScreen = ({ navigation }) => {
           } else {
             sameLabelCount.current = 0;
           }
-  
+
           previousLabels.current = sortedLabels;
-  
+
           if (sameLabelCount.current >= 3) {
             detecting.current = false;
             sameLabelCount.current = 0;
-            router.push('/AskContinueScreen'); // Navigate to the new screen
+            router.push('/AskContinueScreen');
           }
         } else {
           setLabels([]);
@@ -104,18 +102,18 @@ const ObjectDetectionScreen = ({ navigation }) => {
         }
       }
     } catch (error) {
-      console.error('Error analyzing image:', error.message);
+      //  console.error('Error analyzing image:', error.message);
     }
   };
-  
 
-  // Handle messages sent from the WebView
+
+
   const handleMessage = (event) => {
     const base64ImageData = event.nativeEvent.data;
     analyzeImage(base64ImageData);
   };
 
-  // Capture images every 7 seconds
+
   useEffect(() => {
     const intervalId = setInterval(() => {
       captureImage();
@@ -159,6 +157,7 @@ const styles = StyleSheet.create({
   heading: {
     fontSize: 24,
     textAlign: 'center',
+    fontWeight: 'bold',
     marginVertical: 20,
   },
   labelsContainer: {

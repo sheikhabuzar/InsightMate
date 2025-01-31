@@ -9,7 +9,7 @@ const App = () => {
 
   const DEEPGRAM_API_KEY = "7626411a142c24bc75218732a32fd089a8810ba6";
 
-  // Request audio recording permissions for Android
+  
   const requestMicrophonePermission = async () => {
     if (Platform.OS === "android") {
       const granted = await PermissionsAndroid.request(

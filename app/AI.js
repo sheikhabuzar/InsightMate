@@ -16,9 +16,9 @@ const App = () => {
         style={styles.webView}
         scalesPageToFit={false}
         injectedJavaScript={`
-          document.body.style.overflow = 'hidden'; // Hide scrollbars
-          document.body.style.margin = '0'; // Remove default margin
-          document.body.style.clipPath = 'inset(20% 10% 28% 10%)'; // Clip top 20%, bottom 20%, left 10%, right 10%
+          document.body.style.overflow = 'hidden'; 
+          document.body.style.margin = '0'; 
+          document.body.style.clipPath = 'inset(20% 10% 28% 10%)';
           true; // Required to avoid a warning in WebView
         `}
       />

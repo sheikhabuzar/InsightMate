@@ -14,7 +14,8 @@ import MyFamily from './MyFamily';
 import SavedLocations from './SavedLocations';
 import Logout from './Logout';
 import EmergencyContacts from './EmergencyContacts';
-
+import Currency from './Currency';
+import NoteSaver from './NoteSaver';
 import * as FileSystem from "expo-file-system";
 import axios from 'axios';
 
@@ -155,7 +156,7 @@ const startRecording = async () => {
         },
       });
         await recording.startAsync();
-        Speech.speak('Listening');
+        //Speech.speak('Listening');
         console.log('Listening');
 
         setTimeout(async () => {
@@ -177,14 +178,18 @@ const startRecording = async () => {
             } else if (resultText.toLowerCase().includes('open map') || resultText.toLowerCase().includes('map')) {
               router.push('/MapScreen');
             } else if (resultText.toLowerCase().includes('open assistance') || resultText.toLowerCase().includes('assistance')
-            || resultText.toLowerCase().includes('ai')) {
+            || resultText.toLowerCase().includes('ai assistant')) {
               router.push('/AI');
             } 
+            else if (resultText.toLowerCase().includes('currency') || resultText.toLowerCase().includes('currency detection')
+              || resultText.toLowerCase().includes('cash')) {
+                router.push('/Currency');
+              } 
             else {
             startRecording();
             }
           }
-        }, 10000); // Record for 7 seconds
+        }, 10000); 
       } catch (error) {
         console.error('Error during recording:', error);
       }
@@ -203,7 +208,7 @@ const GOOGLE_API_KEY_speech = "AIzaSyDSu1MQNfTaAeoSn5yaJFgs50IjjP84LXA";
   
 
     try {
-      // Read the audio file as base64
+      
       const audioBase64 = await FileSystem.readAsStringAsync(audioUri, {
         encoding: FileSystem.EncodingType.Base64,
       });
@@ -291,6 +296,20 @@ const GOOGLE_API_KEY_speech = "AIzaSyDSu1MQNfTaAeoSn5yaJFgs50IjjP84LXA";
             ),
           }}
         />
+           <Drawer.Screen
+          name="CurrencyCheck"
+          component={Currency}
+          options={{
+            title: 'Currency Check',
+            drawerIcon: ({ color, size }) => (
+              <Image
+              source={require('../assets/images/currency.png')}
+              style={{ width: 24, height: 24 }}
+            />
+            ),
+          }}
+        />
+        
         <Drawer.Screen
           name="SavedLocations"
           component={SavedLocations}
